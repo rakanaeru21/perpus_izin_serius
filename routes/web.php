@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -17,7 +18,16 @@ Route::get('/dashboard/anggota', [DashboardController::class, 'anggota'])->name(
 
 // Admin specific routes
 Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/books', function () { return view('dashboard.admin.books'); })->name('admin.books');
+    // Book Management Routes
+    Route::get('/books', [BookController::class, 'index'])->name('admin.books');
+    Route::get('/books/search', [BookController::class, 'search'])->name('admin.books.search');
+    Route::get('/books/generate-code', [BookController::class, 'generateBookCode'])->name('admin.books.generate-code');
+    Route::post('/books', [BookController::class, 'store'])->name('admin.books.store');
+    Route::get('/books/{id}', [BookController::class, 'show'])->name('admin.books.show');
+    Route::put('/books/{id}', [BookController::class, 'update'])->name('admin.books.update');
+    Route::delete('/books/{id}', [BookController::class, 'destroy'])->name('admin.books.destroy');
+    
+    // Other Admin Routes
     Route::get('/members', function () { return view('dashboard.admin.members'); })->name('admin.members');
     Route::get('/reports', function () { return view('dashboard.admin.reports'); })->name('admin.reports');
 });
