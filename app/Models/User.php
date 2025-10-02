@@ -12,15 +12,26 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'user';
+    protected $primaryKey = 'id_user';
+    public $timestamps = false;
+
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'nama_lengkap',
+        'username',
         'email',
         'password',
+        'no_hp',
+        'alamat',
+        'role',
+        'status',
+        'foto_profil',
+        'tanggal_daftar',
     ];
 
     /**
@@ -41,8 +52,28 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
+            'tanggal_daftar' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the name of the unique identifier for the user.
+     *
+     * @return string
+     */
+    public function getAuthIdentifierName()
+    {
+        return $this->primaryKey; // Use the primary key for authentication
+    }
+
+    /**
+     * Find user by username or email for authentication
+     */
+    public static function findForAuth($credential)
+    {
+        return static::where('username', $credential)
+                    ->orWhere('email', $credential)
+                    ->first();
     }
 }
