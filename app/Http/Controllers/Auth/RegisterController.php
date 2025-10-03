@@ -30,7 +30,7 @@ class RegisterController extends Controller
             'nama_lengkap' => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'max:50', 'unique:user,username', 'regex:/^[a-zA-Z0-9_]+$/'],
             'email' => ['nullable', 'string', 'email', 'max:100', 'unique:user,email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => ['required', 'confirmed', 'min:8'],
             'no_hp' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
             'alamat' => ['nullable', 'string'],
             'foto_profil' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
@@ -92,13 +92,19 @@ class RegisterController extends Controller
                 ->with('success', 'Registrasi berhasil! Silakan login dengan akun Anda.');
 
         } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Registration error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['password', 'password_confirmation'])
+            ]);
+
             // Jika ada error, hapus file yang sudah diupload
-            if ($request->hasFile('foto_profil') && $fotoProfilName !== 'default.png') {
+            if ($request->hasFile('foto_profil') && isset($fotoProfilName) && $fotoProfilName !== 'default.png') {
                 Storage::delete('public/profile_photos/' . $fotoProfilName);
             }
 
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.')
+                ->with('error', 'Terjadi kesalahan saat mendaftar: ' . $e->getMessage())
                 ->withInput();
         }
     }

@@ -5,6 +5,45 @@
 @section('user-name', 'Anggota Perpustakaan')
 @section('user-role', 'Anggota')
 
+@section('sidebar-menu')
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('dashboard.anggota') }}">
+            <i class="bi bi-speedometer2 me-2"></i>
+            Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('anggota.catalog') }}">
+            <i class="bi bi-book me-2"></i>
+            Katalog Buku
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{{ route('anggota.favorites') }}">
+            <i class="bi bi-bookmark-heart me-2"></i>
+            Buku Favorit
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('anggota.loans') }}">
+            <i class="bi bi-arrow-repeat me-2"></i>
+            Pinjaman Saya
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-clock-history me-2"></i>
+            Riwayat Pinjaman
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('anggota.profile') }}">
+            <i class="bi bi-person me-2"></i>
+            Profil Saya
+        </a>
+    </li>
+@endsection
+
 @section('content')
 <div class="row mb-4">
     <div class="col-12">

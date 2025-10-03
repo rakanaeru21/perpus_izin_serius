@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\BorrowController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -26,7 +27,7 @@ Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(func
     Route::get('/books/{id}', [BookController::class, 'show'])->name('admin.books.show');
     Route::put('/books/{id}', [BookController::class, 'update'])->name('admin.books.update');
     Route::delete('/books/{id}', [BookController::class, 'destroy'])->name('admin.books.destroy');
-    
+
     // Other Admin Routes
     Route::get('/members', function () { return view('dashboard.admin.members'); })->name('admin.members');
     Route::get('/reports', function () { return view('dashboard.admin.reports'); })->name('admin.reports');
@@ -34,14 +35,20 @@ Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(func
 
 // Anggota specific routes
 Route::prefix('dashboard/anggota')->middleware(['auth', 'role:anggota'])->group(function () {
-    Route::get('/search', function () { return view('dashboard.anggota.search'); })->name('anggota.search');
+    Route::get('/catalog', function () { return view('dashboard.anggota.catalog'); })->name('anggota.catalog');
+    Route::get('/catalog/api', [BookController::class, 'catalog'])->name('anggota.catalog.api');
     Route::get('/loans', function () { return view('dashboard.anggota.loans'); })->name('anggota.loans');
     Route::get('/favorites', function () { return view('dashboard.anggota.favorites'); })->name('anggota.favorites');
+    Route::get('/profile', [DashboardController::class, 'profile'])->name('anggota.profile');
 });
 
 // Petugas specific routes
 Route::prefix('dashboard/petugas')->middleware(['auth', 'role:petugas'])->group(function () {
-    Route::get('/borrow', function () { return view('dashboard.petugas.borrow'); })->name('petugas.borrow');
+    Route::get('/borrow', [BorrowController::class, 'index'])->name('petugas.borrow');
+    Route::post('/borrow/search-user', [BorrowController::class, 'searchUser'])->name('petugas.borrow.search-user');
+    Route::post('/borrow/search-book', [BorrowController::class, 'searchBook'])->name('petugas.borrow.search-book');
+    Route::post('/borrow', [BorrowController::class, 'store'])->name('petugas.borrow.store');
+    Route::get('/borrow/today', [BorrowController::class, 'getTodayBorrowings'])->name('petugas.borrow.today');
     Route::get('/return', function () { return view('dashboard.petugas.return'); })->name('petugas.return');
 });
 
@@ -57,3 +64,8 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 // AJAX validation routes
 Route::post('/check-username', [RegisterController::class, 'checkUsername'])->name('check.username');
 Route::post('/check-email', [RegisterController::class, 'checkEmail'])->name('check.email');
+
+// Test route
+Route::get('/test-register', function () {
+    return view('test_register');
+});

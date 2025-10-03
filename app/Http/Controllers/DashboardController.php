@@ -75,6 +75,21 @@ class DashboardController extends Controller
     }
 
     /**
+     * Profile page for Anggota
+     */
+    public function profile()
+    {
+        $data = [
+            'totalPinjaman' => $this->getTotalPinjamanUser(),
+            'sedangDipinjam' => $this->getBukuDipinjamUser(),
+            'sudahDikembalikan' => $this->getBukuDikembalikanUser(),
+            'terlambat' => $this->getKeterlambatanUser()
+        ];
+
+        return view('dashboard.anggota.profile', $data);
+    }
+
+    /**
      * Get total number of books
      */
     private function getTotalBuku()
@@ -331,5 +346,34 @@ class DashboardController extends Controller
                 'kategori' => 'Romance'
             ]
         ];
+    }
+
+    /**
+     * Get total pinjaman for current user
+     */
+    private function getTotalPinjamanUser()
+    {
+        try {
+            return DB::table('peminjaman')
+                ->where('id_user', auth()->id())
+                ->count();
+        } catch (\Exception $e) {
+            return 5;
+        }
+    }
+
+    /**
+     * Get total dikembalikan for current user
+     */
+    private function getBukuDikembalikanUser()
+    {
+        try {
+            return DB::table('peminjaman')
+                ->where('id_user', auth()->id())
+                ->where('status', 'dikembalikan')
+                ->count();
+        } catch (\Exception $e) {
+            return 2;
+        }
     }
 }

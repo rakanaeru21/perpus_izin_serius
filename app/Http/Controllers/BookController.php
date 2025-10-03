@@ -47,17 +47,17 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug: Log request details
+        // Debugging log
         \Log::info('Book store request received');
         \Log::info('Has file: ' . ($request->hasFile('cover') ? 'Yes' : 'No'));
-        
+
         if ($request->hasFile('cover')) {
-            \Log::info('File details: ' . $request->file('cover')->getClientOriginalName());
+            \Log::info('File name: ' . $request->file('cover')->getClientOriginalName());
             \Log::info('File size: ' . $request->file('cover')->getSize());
             \Log::info('File valid: ' . ($request->file('cover')->isValid() ? 'Yes' : 'No'));
         }
-        
-        // Validate the request
+
+        // Validasi input
         $validated = $request->validate([
             'kode_buku' => 'required|string|max:20|unique:buku,kode_buku',
             'judul_buku' => 'required|string|max:200',
@@ -73,21 +73,20 @@ class BookController extends Controller
         ]);
 
         try {
-            // Handle cover upload
-            $coverName = null;
+            $coverName = 'default_cover.png'; // default
+
+            // Upload cover jika ada
             if ($request->hasFile('cover')) {
                 $cover = $request->file('cover');
                 $coverName = time() . '_' . $cover->getClientOriginalName();
-                
-                // Debug: Log file upload attempt
-                \Log::info('Uploading cover: ' . $coverName);
-                
-                // Store file and check if successful
-                $path = $cover->storeAs('public/covers', $coverName);
-                \Log::info('File stored at: ' . $path);
+
+                // Simpan ke storage/app/public/covers menggunakan public disk
+                $path = $cover->storeAs('covers', $coverName, 'public');
+
+                \Log::info('Cover uploaded to: ' . $path);
             }
 
-            // Insert into database
+            // Simpan ke database
             DB::table('buku')->insert([
                 'kode_buku' => $validated['kode_buku'],
                 'judul_buku' => $validated['judul_buku'],
@@ -99,8 +98,8 @@ class BookController extends Controller
                 'jumlah_total' => $validated['jumlah_total'],
                 'jumlah_tersedia' => $validated['jumlah_tersedia'],
                 'deskripsi' => $validated['deskripsi'],
-                'cover' => $coverName ?: 'default_cover.png', // Use default only if no cover uploaded
-                'tanggal_input' => now()
+                'cover' => $coverName,
+                'tanggal_input' => now(),
             ]);
 
             return response()->json([
@@ -109,6 +108,7 @@ class BookController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Book store error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menambahkan buku: ' . $e->getMessage()
@@ -151,7 +151,7 @@ class BookController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Validate the request
+        // Validasi input
         $validated = $request->validate([
             'kode_buku' => 'required|string|max:20|unique:buku,kode_buku,' . $id . ',id_buku',
             'judul_buku' => 'required|string|max:200',
@@ -167,9 +167,9 @@ class BookController extends Controller
         ]);
 
         try {
-            // Get current book data
+            // Ambil data buku lama
             $currentBook = DB::table('buku')->where('id_buku', $id)->first();
-            
+
             if (!$currentBook) {
                 return response()->json([
                     'success' => false,
@@ -179,19 +179,22 @@ class BookController extends Controller
 
             $coverName = $currentBook->cover;
 
-            // Handle cover upload
+            // Jika ada file cover baru
             if ($request->hasFile('cover')) {
-                // Delete old cover if not default
-                if ($currentBook->cover !== 'default_cover.png') {
-                    Storage::delete('public/covers/' . $currentBook->cover);
-                }
-                
                 $cover = $request->file('cover');
                 $coverName = time() . '_' . $cover->getClientOriginalName();
-                $cover->storeAs('public/covers', $coverName);
+
+                // Hapus cover lama jika bukan default
+                if ($currentBook->cover !== 'default_cover.png') {
+                    Storage::disk('public')->delete('covers/' . $currentBook->cover);
+                }
+
+                // Simpan cover baru menggunakan public disk
+                $path = $cover->storeAs('covers', $coverName, 'public');
+                \Log::info('Cover updated, saved to: ' . $path);
             }
 
-            // Update database
+            // Update data di database
             DB::table('buku')
                 ->where('id_buku', $id)
                 ->update([
@@ -205,7 +208,7 @@ class BookController extends Controller
                     'jumlah_total' => $validated['jumlah_total'],
                     'jumlah_tersedia' => $validated['jumlah_tersedia'],
                     'deskripsi' => $validated['deskripsi'],
-                    'cover' => $coverName
+                    'cover' => $coverName,
                 ]);
 
             return response()->json([
@@ -214,6 +217,7 @@ class BookController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Book update error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memperbarui buku: ' . $e->getMessage()
@@ -229,7 +233,7 @@ class BookController extends Controller
         try {
             // Get book data before deletion
             $book = DB::table('buku')->where('id_buku', $id)->first();
-            
+
             if (!$book) {
                 return response()->json([
                     'success' => false,
@@ -252,7 +256,7 @@ class BookController extends Controller
 
             // Delete cover file if not default
             if ($book->cover !== 'default_cover.png') {
-                Storage::delete('public/covers/' . $book->cover);
+                Storage::disk('public')->delete('covers/' . $book->cover);
             }
 
             // Delete book from database
@@ -277,7 +281,7 @@ class BookController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q', '');
-        
+
         try {
             $books = DB::table('buku')
                 ->where(function($q) use ($query) {
@@ -331,6 +335,134 @@ class BookController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal generate kode buku: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get books for catalog with filtering and pagination
+     */
+    public function catalog(Request $request)
+    {
+        try {
+            $search = $request->get('search', '');
+            $category = $request->get('category', '');
+            $year = $request->get('year', '');
+            $status = $request->get('status', '');
+            $sort = $request->get('sort', 'newest');
+            $page = (int) $request->get('page', 1);
+            $perPage = (int) $request->get('per_page', 6);
+
+            $query = DB::table('buku')
+                ->select([
+                    'id_buku',
+                    'kode_buku',
+                    'judul_buku',
+                    'penulis',
+                    'penerbit',
+                    'tahun_terbit',
+                    'kategori',
+                    'rak',
+                    'jumlah_total',
+                    'jumlah_tersedia',
+                    'cover',
+                    'deskripsi',
+                    'tanggal_input'
+                ]);
+
+            // Apply search filter
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('judul_buku', 'LIKE', '%' . $search . '%')
+                      ->orWhere('penulis', 'LIKE', '%' . $search . '%')
+                      ->orWhere('kategori', 'LIKE', '%' . $search . '%');
+                });
+            }
+
+            // Apply category filter
+            if (!empty($category)) {
+                $query->where('kategori', 'LIKE', '%' . $category . '%');
+            }
+
+            // Apply year filter
+            if (!empty($year)) {
+                if ($year === 'older') {
+                    $query->where('tahun_terbit', '<', 2019);
+                } else {
+                    $query->where('tahun_terbit', $year);
+                }
+            }
+
+            // Apply status filter
+            if (!empty($status)) {
+                if ($status === 'available') {
+                    $query->where('jumlah_tersedia', '>', 0);
+                } elseif ($status === 'borrowed') {
+                    $query->where('jumlah_tersedia', '=', 0);
+                }
+            }
+
+            // Apply sorting
+            switch ($sort) {
+                case 'newest':
+                    $query->orderBy('tahun_terbit', 'desc');
+                    break;
+                case 'oldest':
+                    $query->orderBy('tahun_terbit', 'asc');
+                    break;
+                case 'title':
+                    $query->orderBy('judul_buku', 'asc');
+                    break;
+                case 'title_desc':
+                    $query->orderBy('judul_buku', 'desc');
+                    break;
+                case 'author':
+                    $query->orderBy('penulis', 'asc');
+                    break;
+                default:
+                    $query->orderBy('tanggal_input', 'desc');
+            }
+
+            // Get total count for pagination
+            $total = $query->count();
+
+            // Apply pagination
+            $offset = ($page - 1) * $perPage;
+            $books = $query->offset($offset)->limit($perPage)->get();
+
+            // Calculate pagination info
+            $totalPages = ceil($total / $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'books' => $books,
+                    'pagination' => [
+                        'current_page' => $page,
+                        'per_page' => $perPage,
+                        'total' => $total,
+                        'total_pages' => $totalPages,
+                        'has_next' => $page < $totalPages,
+                        'has_prev' => $page > 1
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data katalog: ' . $e->getMessage(),
+                'data' => [
+                    'books' => [],
+                    'pagination' => [
+                        'current_page' => 1,
+                        'per_page' => 6,
+                        'total' => 0,
+                        'total_pages' => 0,
+                        'has_next' => false,
+                        'has_prev' => false
+                    ]
+                ]
             ], 500);
         }
     }

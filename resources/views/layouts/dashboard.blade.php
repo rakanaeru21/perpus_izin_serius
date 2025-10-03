@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') - Perpustakaan Digital</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -95,17 +95,17 @@
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
                         <h4 class="brand-text">
-                            <i class="bi bi-book"></i> 
+                            <i class="bi bi-book"></i>
                             Perpustakaan
                         </h4>
                         <p class="text-white-50 small">Sistem Manajemen Digital</p>
                     </div>
-                    
+
                     <!-- Navigation Menu -->
                     <ul class="nav flex-column">
                         @yield('sidebar-menu')
                     </ul>
-                    
+
                     <!-- User Info -->
                     <div class="mt-4 pt-3 border-top border-white-50">
                         <div class="text-center">
@@ -127,11 +127,11 @@
                         <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target=".sidebar">
                             <span class="navbar-toggler-icon"></span>
                         </button>
-                        
+
                         <div class="d-flex align-items-center">
                             <h2 class="h4 mb-0 text-primary">@yield('page-title', 'Dashboard')</h2>
                         </div>
-                        
+
                         <div class="d-flex align-items-center">
                             <div class="dropdown">
                                 <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
@@ -142,7 +142,15 @@
                                     <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profil</a></li>
                                     <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Pengaturan</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                                    <li>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+
                                 </ul>
                             </div>
                         </div>
@@ -161,6 +169,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @stack('scripts')
