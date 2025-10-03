@@ -68,7 +68,7 @@ class RegisterController extends Controller
             if ($request->hasFile('foto_profil')) {
                 $file = $request->file('foto_profil');
                 $fotoProfilName = time() . '_' . $file->getClientOriginalName();
-                
+
                 // Simpan file ke storage/app/public/profile_photos
                 $file->storeAs('public/profile_photos', $fotoProfilName);
             }
@@ -116,7 +116,7 @@ class RegisterController extends Controller
     {
         $username = $request->get('username');
         $exists = User::where('username', $username)->exists();
-        
+
         return response()->json([
             'available' => !$exists,
             'message' => $exists ? 'Username sudah digunakan' : 'Username tersedia'
@@ -130,7 +130,7 @@ class RegisterController extends Controller
     {
         $email = $request->get('email');
         $exists = User::where('email', $email)->exists();
-        
+
         return response()->json([
             'available' => !$exists,
             'message' => $exists ? 'Email sudah digunakan' : 'Email tersedia'

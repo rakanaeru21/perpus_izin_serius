@@ -6,7 +6,7 @@
 </head>
 <body>
     <h1>Test Registration Form</h1>
-    
+
     @if($errors->any())
         <div style="color: red;">
             <ul>
@@ -49,7 +49,7 @@
         </p>
         <p>
             <label>
-                <input type="checkbox" name="terms" value="1" required> 
+                <input type="checkbox" name="terms" value="1" required>
                 I agree to terms
             </label>
         </p>
