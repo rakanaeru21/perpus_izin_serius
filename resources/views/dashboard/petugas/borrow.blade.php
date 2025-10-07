@@ -6,273 +6,191 @@
 @section('user-role', 'Petugas')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-lg-6">
+<div class="row justify-content-center">
+    <div class="col-lg-8">
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h6 class="card-title mb-0">
-                    <i class="bi bi-plus-circle me-2"></i>Form Peminjaman Baru
+                    <i class="bi bi-plus-circle me-2"></i>Form Peminjaman Buku
                 </h6>
             </div>
             <div class="card-body">
                 <form id="borrowForm">
                     @csrf
-                    <!-- ID User Section -->
+
+                    <!-- ID User atau Username -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-person me-1"></i>ID Anggota
-                            <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <input type="number"
-                                   id="idUser"
-                                   name="id_user"
-                                   class="form-control"
-                                   placeholder="Masukkan ID Anggota"
-                                   required
-                                   min="1">
-                            <button class="btn btn-outline-primary" type="button" id="searchUserBtn">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
+                        <label for="id_user" class="form-label">ID User atau Username <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="id_user" name="id_user" placeholder="Masukkan ID User atau Username" required>
                         <div class="invalid-feedback" id="userError"></div>
-                        <small class="form-text text-muted">Masukkan ID anggota untuk mencari data</small>
+                        <small class="form-text text-muted">Contoh: 2 atau username</small>
                     </div>
 
-                    <!-- Nama User (Read-only) -->
+                    <!-- ID Buku atau Kode Buku -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Nama Anggota</label>
-                        <input type="text" id="userName" class="form-control" readonly>
-                    </div>
-
-                    <!-- ID Buku Section -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-book me-1"></i>ID Buku
-                            <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <input type="number"
-                                   id="idBuku"
-                                   name="id_buku"
-                                   class="form-control"
-                                   placeholder="Scan barcode atau masukkan ID buku"
-                                   required
-                                   min="1">
-                            <button class="btn btn-outline-primary" type="button" id="searchBookBtn">
-                                <i class="bi bi-upc-scan"></i>
-                            </button>
-                        </div>
+                        <label for="id_buku" class="form-label">ID Buku atau Kode Buku <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="id_buku" name="id_buku" placeholder="Masukkan ID Buku atau Kode Buku" required>
                         <div class="invalid-feedback" id="bookError"></div>
-                        <small class="form-text text-muted">Scan barcode atau masukkan ID buku</small>
+                        <small class="form-text text-muted">Contoh: 1 atau BK001</small>
                     </div>
 
-                    <!-- Judul Buku (Read-only) -->
+                    <!-- Tanggal Pinjam -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Judul Buku</label>
-                        <input type="text" id="bookTitle" class="form-control" readonly>
-                    </div>
-
-                    <!-- Tanggal Pinjam (Auto-filled) -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-calendar-event me-1"></i>Tanggal Pinjam
-                        </label>
-                        <input type="date"
-                               id="tanggalPinjam"
-                               name="tanggal_pinjam"
-                               class="form-control"
-                               readonly
-                               value="{{ date('Y-m-d') }}">
-                        <small class="form-text text-muted">Tanggal peminjaman otomatis hari ini</small>
+                        <label for="tanggal_pinjam" class="form-label">Tanggal Pinjam</label>
+                        <input type="date" class="form-control" id="tanggal_pinjam" name="tanggal_pinjam" value="{{ date('Y-m-d') }}" readonly>
                     </div>
 
                     <!-- Batas Kembali -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-calendar-check me-1"></i>Batas Tanggal Kembali
-                            <span class="text-danger">*</span>
-                        </label>
-                        <input type="date"
-                               id="batasKembali"
-                               name="batas_kembali"
-                               class="form-control"
-                               required>
-                        <small class="form-text text-muted">Pilih batas waktu pengembalian buku</small>
+                        <label for="batas_kembali" class="form-label">Batas Kembali <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="batas_kembali" name="batas_kembali" required>
                     </div>
 
-                    <!-- Status (Auto-filled) -->
+                    <!-- Status -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Status Peminjaman</label>
-                        <select id="status" name="status" class="form-control" readonly>
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" readonly>
                             <option value="dipinjam" selected>Dipinjam</option>
                         </select>
-                        <small class="form-text text-muted">Status otomatis "Dipinjam"</small>
                     </div>
 
-                    <!-- Denda (Hidden - Auto 0) -->
-                    <input type="hidden" id="denda" name="denda" value="0.00">
+                    <!-- Denda -->
+                    <div class="mb-3">
+                        <label for="denda" class="form-label">Denda</label>
+                        <input type="number" class="form-control" id="denda" name="denda" value="0.00" step="0.01" readonly>
+                    </div>
 
                     <!-- Keterangan -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-chat-text me-1"></i>Keterangan
-                        </label>
-                        <textarea id="keterangan"
-                                  name="keterangan"
-                                  class="form-control"
-                                  rows="3"
-                                  placeholder="Masukkan keterangan tambahan (opsional)"></textarea>
-                        <small class="form-text text-muted">Informasi tambahan tentang peminjaman ini</small>
+                        <label for="keterangan" class="form-label">Keterangan</label>
+                        <textarea class="form-control" id="keterangan" name="keterangan" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                            <i class="bi bi-check-circle me-2"></i>
-                            Proses Peminjaman
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-check-circle me-2"></i>Proses Peminjaman
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="resetBtn">
-                            <i class="bi bi-arrow-clockwise me-2"></i>
-                            Reset Form
+                        <button type="button" class="btn btn-secondary" id="resetBtn">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Reset
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h6 class="card-title mb-0">
-                    <i class="bi bi-info-circle me-2"></i>Informasi Anggota
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="text-center mb-3">
-                    <i class="bi bi-person-circle text-muted" style="font-size: 4rem;"></i>
-                    <h5 class="mt-2" id="userDisplayName">Pilih Anggota</h5>
-                </div>
-
-                <!-- User Info Cards -->
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="card bg-light">
-                            <div class="card-body text-center p-3">
-                                <i class="bi bi-shield-check text-primary fs-4"></i>
-                                <div class="mt-2">
-                                    <small class="text-muted d-block">Status Keanggotaan</small>
-                                    <strong id="memberStatus" class="text-primary">-</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="card bg-light">
-                            <div class="card-body text-center p-3">
-                                <i class="bi bi-book text-warning fs-4"></i>
-                                <div class="mt-2">
-                                    <small class="text-muted d-block">Buku Dipinjam</small>
-                                    <strong id="activeBorrowings" class="text-warning">-</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="card bg-light">
-                            <div class="card-body text-center p-3">
-                                <i class="bi bi-clock text-danger fs-4"></i>
-                                <div class="mt-2">
-                                    <small class="text-muted d-block">Keterlambatan</small>
-                                    <strong id="overdueBorrowings" class="text-danger">-</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="card bg-light">
-                            <div class="card-body text-center p-3">
-                                <i class="bi bi-currency-dollar text-success fs-4"></i>
-                                <div class="mt-2">
-                                    <small class="text-muted d-block">Total Denda</small>
-                                    <strong id="totalFines" class="text-success">-</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Book Info Section -->
-                <div class="mt-4" id="bookInfoSection" style="display: none;">
-                    <hr>
-                    <h6 class="text-muted mb-3">
-                        <i class="bi bi-book me-2"></i>Informasi Buku
-                    </h6>
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-4">
-                                    <small class="text-muted">Penulis</small>
-                                    <p class="mb-2" id="bookAuthor">-</p>
-                                </div>
-                                <div class="col-4">
-                                    <small class="text-muted">Tahun</small>
-                                    <p class="mb-2" id="bookYear">-</p>
-                                </div>
-                                <div class="col-4">
-                                    <small class="text-muted">Status</small>
-                                    <p class="mb-2" id="bookStatus">-</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
-<div class="row">
+<!-- Today's Borrowings -->
+<div class="row mt-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-white">
-                <h6 class="card-title mb-0">Peminjaman Hari Ini</h6>
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-list-ul me-2"></i>Peminjaman Hari Ini
+                </h6>
+                <span class="badge bg-primary">{{ $todayBorrowings->count() }} peminjaman</span>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-striped table-hover" id="todayBorrowingsTable">
                         <thead class="table-light">
                             <tr>
-                                <th>No</th>
-                                <th>ID Pinjaman</th>
+                                <th>ID Peminjaman</th>
                                 <th>Nama Anggota</th>
                                 <th>Judul Buku</th>
-                                <th>Waktu Pinjam</th>
-                                <th>Tanggal Kembali</th>
+                                <th>Waktu</th>
+                                <th>Batas Kembali</th>
                                 <th>Status</th>
+                                <th>Keterangan</th>
                             </tr>
                         </thead>
-                        <tbody id="todayBorrowingsTable">
-                            @if(isset($todayBorrowings) && $todayBorrowings->count() > 0)
-                                @foreach($todayBorrowings as $index => $borrowing)
-                                <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td><span class="badge bg-primary">#PJM{{ str_pad($borrowing->id_peminjaman, 6, '0', STR_PAD_LEFT) }}</span></td>
-                                    <td>{{ $borrowing->user->nama_lengkap }}</td>
-                                    <td>{{ $borrowing->book->judul_buku }}</td>
-                                    <td>{{ $borrowing->tanggal_pinjam->format('H:i') }}</td>
-                                    <td>{{ $borrowing->batas_kembali->format('d M Y') }}</td>
-                                    <td><span class="badge bg-{{ $borrowing->status_color }}">{{ $borrowing->formatted_status }}</span></td>
-                                </tr>
-                                @endforeach
-                            @else
-                                <tr id="noBorrowingsRow">
-                                    <td colspan="7" class="text-center text-muted">Belum ada peminjaman hari ini</td>
-                                </tr>
-                            @endif
+                        <tbody>
+                            @forelse($todayBorrowings as $borrowing)
+                            <tr>
+                                <td>
+                                    <span class="fw-bold text-primary">
+                                        PJM{{ str_pad($borrowing->id_peminjaman, 6, '0', STR_PAD_LEFT) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ $borrowing->user->nama_lengkap }}</strong>
+                                        <small class="text-muted d-block">{{ $borrowing->user->username }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ $borrowing->book->judul_buku }}</strong>
+                                        <small class="text-muted d-block">{{ $borrowing->book->penulis }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        {{ $borrowing->tanggal_pinjam->format('H:i') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">
+                                        {{ $borrowing->batas_kembali->format('d M Y') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $borrowing->status_color }}">
+                                        {{ $borrowing->formatted_status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        {{ $borrowing->keterangan ?? '-' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                        <p class="mb-0">Belum ada peminjaman hari ini</p>
+                                        <small>Peminjaman akan muncul di sini setelah diproses</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
+
+                @if($todayBorrowings->count() > 0)
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <h6 class="mb-1">Total Hari Ini</h6>
+                                <span class="h4 text-primary">{{ $todayBorrowings->count() }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <h6 class="mb-1">Buku Dipinjam</h6>
+                                <span class="h4 text-info">{{ $todayBorrowings->where('status', 'dipinjam')->count() }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <h6 class="mb-1">Peminjam Unik</h6>
+                                <span class="h4 text-success">{{ $todayBorrowings->unique('id_user')->count() }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-2">
+                                <h6 class="mb-1">Buku Berbeda</h6>
+                                <span class="h4 text-warning">{{ $todayBorrowings->unique('id_buku')->count() }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -280,34 +198,17 @@
 
 <script>
 $(document).ready(function() {
-    let selectedUser = null;
-    let selectedBook = null;
+    console.log('Document ready - Form loaded successfully');
 
     // Set minimum return date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    $('#batasKembali').attr('min', tomorrow.toISOString().split('T')[0]);
+    $('#batas_kembali').attr('min', tomorrow.toISOString().split('T')[0]);
 
     // Set default return date to 7 days from now
     const defaultReturnDate = new Date();
     defaultReturnDate.setDate(defaultReturnDate.getDate() + 7);
-    $('#batasKembali').val(defaultReturnDate.toISOString().split('T')[0]);
-
-    // Search user functionality
-    $('#searchUserBtn, #idUser').on('click keypress', function(e) {
-        if (e.type === 'click' || (e.type === 'keypress' && e.which === 13)) {
-            e.preventDefault();
-            searchUser();
-        }
-    });
-
-    // Search book functionality
-    $('#searchBookBtn, #idBuku').on('click keypress', function(e) {
-        if (e.type === 'click' || (e.type === 'keypress' && e.which === 13)) {
-            e.preventDefault();
-            searchBook();
-        }
-    });
+    $('#batas_kembali').val(defaultReturnDate.toISOString().split('T')[0]);
 
     // Form submission
     $('#borrowForm').on('submit', function(e) {
@@ -320,104 +221,26 @@ $(document).ready(function() {
         resetForm();
     });
 
-    function searchUser() {
-        const userId = $('#idUser').val().trim();
-
-        if (!userId) {
-            showError('userError', 'Masukkan ID Anggota');
-            return;
-        }
-
-        // Show loading state
-        $('#searchUserBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
-        clearUserData();
-
-        $.ajax({
-            url: '{{ route("petugas.borrow.search-user") }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                query: userId
-            },
-            success: function(response) {
-                if (response.success) {
-                    selectedUser = response.data;
-                    populateUserData(response.data);
-                    clearError('userError');
-                } else {
-                    showError('userError', response.message);
-                    selectedUser = null;
-                }
-            },
-            error: function(xhr) {
-                showError('userError', 'Terjadi kesalahan saat mencari anggota');
-                selectedUser = null;
-            },
-            complete: function() {
-                $('#searchUserBtn').prop('disabled', false).html('<i class="bi bi-search"></i>');
-            }
-        });
-    }
-
-    function searchBook() {
-        const bookId = $('#idBuku').val().trim();
-
-        if (!bookId) {
-            showError('bookError', 'Masukkan ID Buku');
-            return;
-        }
-
-        // Show loading state
-        $('#searchBookBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
-        clearBookData();
-
-        $.ajax({
-            url: '{{ route("petugas.borrow.search-book") }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                query: bookId
-            },
-            success: function(response) {
-                if (response.success) {
-                    selectedBook = response.data;
-                    populateBookData(response.data);
-                    clearError('bookError');
-                    $('#bookInfoSection').show();
-                } else {
-                    showError('bookError', response.message);
-                    selectedBook = null;
-                    $('#bookInfoSection').hide();
-                }
-            },
-            error: function(xhr) {
-                showError('bookError', 'Terjadi kesalahan saat mencari buku');
-                selectedBook = null;
-                $('#bookInfoSection').hide();
-            },
-            complete: function() {
-                $('#searchBookBtn').prop('disabled', false).html('<i class="bi bi-upc-scan"></i>');
-            }
-        });
-    }
-
     function processBorrowing() {
-        if (!selectedUser) {
-            showError('userError', 'Pilih anggota terlebih dahulu');
-            $('#idUser').focus();
+        const userInput = $('#id_user').val().trim();
+        const bookInput = $('#id_buku').val().trim();
+
+        if (!userInput) {
+            showError('userError', 'ID User atau Username harus diisi');
+            $('#id_user').focus();
             return;
         }
 
-        if (!selectedBook) {
-            showError('bookError', 'Pilih buku terlebih dahulu');
-            $('#idBuku').focus();
+        if (!bookInput) {
+            showError('bookError', 'ID Buku atau Kode Buku harus diisi');
+            $('#id_buku').focus();
             return;
         }
 
-        const batasKembali = $('#batasKembali').val();
+        const batasKembali = $('#batas_kembali').val();
         if (!batasKembali) {
             alert('Pilih batas tanggal kembali');
-            $('#batasKembali').focus();
+            $('#batas_kembali').focus();
             return;
         }
 
@@ -426,72 +249,79 @@ $(document).ready(function() {
         const returnDate = new Date(batasKembali);
         if (returnDate <= today) {
             alert('Batas tanggal kembali harus setelah hari ini');
-            $('#batasKembali').focus();
+            $('#batas_kembali').focus();
             return;
         }
+
+        // Clear previous errors
+        clearError('userError');
+        clearError('bookError');
 
         // Show loading state
         $('#submitBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Memproses...');
 
-        // Prepare form data matching pinjaman table structure
+        // Prepare form data
         const formData = {
             _token: '{{ csrf_token() }}',
-            id_user: selectedUser.id_user,
-            id_buku: selectedBook.id_buku,
-            tanggal_pinjam: $('#tanggalPinjam').val(),
+            id_user: userInput,
+            id_buku: bookInput,
+            tanggal_pinjam: $('#tanggal_pinjam').val(),
             batas_kembali: batasKembali,
             status: 'dipinjam',
             denda: 0.00,
             keterangan: $('#keterangan').val().trim() || null
         };
 
+        console.log('Submitting form data:', formData);
+
         $.ajax({
             url: '{{ route("petugas.borrow.store") }}',
             method: 'POST',
             data: formData,
             success: function(response) {
+                console.log('Form submission response:', response);
                 if (response.success) {
-                    // Show success message
                     Swal.fire({
-                        icon: 'success',
                         title: 'Berhasil!',
-                        text: response.message,
-                        showConfirmButton: false,
-                        timer: 2000
+                        text: 'Peminjaman berhasil diproses',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        resetForm();
+                        // Refresh halaman untuk update tabel peminjaman
+                        window.location.reload();
                     });
-
-                    // Reset form
-                    resetForm();
-
-                    // Update today's borrowings table
-                    updateTodayBorrowings();
-
-                    // Generate receipt if needed
-                    if (response.borrowing_id) {
-                        showBorrowingReceipt(response.borrowing_id, selectedUser, selectedBook, batasKembali);
-                    }
                 } else {
                     Swal.fire({
-                        icon: 'error',
                         title: 'Gagal!',
-                        text: response.message
+                        text: response.message,
+                        icon: 'error'
                     });
                 }
             },
             error: function(xhr) {
+                console.error('Form submission error:', xhr);
                 let errorMessage = 'Terjadi kesalahan saat memproses peminjaman';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    // Handle validation errors
+
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    // Validation errors
                     const errors = xhr.responseJSON.errors;
-                    errorMessage = Object.values(errors).flat().join(', ');
+                    if (errors.id_user) {
+                        showError('userError', errors.id_user[0]);
+                    }
+                    if (errors.id_buku) {
+                        showError('bookError', errors.id_buku[0]);
+                    }
+                    errorMessage = 'Data yang dimasukkan tidak valid';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
                 }
 
                 Swal.fire({
-                    icon: 'error',
                     title: 'Error!',
-                    text: errorMessage
+                    text: errorMessage,
+                    icon: 'error'
                 });
             },
             complete: function() {
@@ -500,77 +330,26 @@ $(document).ready(function() {
         });
     }
 
-    function populateUserData(user) {
-        $('#userName').val(user.nama_lengkap || user.name);
-        $('#userDisplayName').text(user.nama_lengkap || user.name);
-        $('#memberStatus').text(user.status === 'aktif' ? 'Aktif' : 'Tidak Aktif')
-                           .removeClass('text-success text-danger')
-                           .addClass(user.status === 'aktif' ? 'text-success' : 'text-danger');
-        $('#activeBorrowings').text((user.active_borrowings || 0) + ' buku');
-        $('#overdueBorrowings').text((user.overdue_borrowings || 0) + ' buku');
-        $('#totalFines').text('Rp ' + new Intl.NumberFormat('id-ID').format(user.total_fines || 0));
-    }
-
-    function populateBookData(book) {
-        $('#bookTitle').val(book.judul_buku || book.title);
-        $('#bookAuthor').text(book.penulis || book.author || '-');
-        $('#bookYear').text(book.tahun_terbit || book.year || '-');
-        $('#bookStatus').text(book.status_buku || book.status || 'Tersedia')
-                        .removeClass('text-success text-warning text-danger')
-                        .addClass(getBookStatusClass(book.status_buku || book.status));
-    }
-
-    function getBookStatusClass(status) {
-        switch(status) {
-            case 'tersedia':
-            case 'available':
-                return 'text-success';
-            case 'dipinjam':
-            case 'borrowed':
-                return 'text-warning';
-            case 'hilang':
-            case 'rusak':
-            case 'lost':
-            case 'damaged':
-                return 'text-danger';
-            default:
-                return 'text-muted';
-        }
-    }
-
     function clearUserData() {
-        $('#userName').val('');
-        $('#userDisplayName').text('Pilih Anggota');
-        $('#memberStatus').text('-').removeClass('text-success text-danger');
-        $('#activeBorrowings').text('-');
-        $('#overdueBorrowings').text('-');
-        $('#totalFines').text('-');
+        // Not needed anymore
     }
 
     function clearBookData() {
-        $('#bookTitle').val('');
-        $('#bookAuthor').text('-');
-        $('#bookYear').text('-');
-        $('#bookStatus').text('-').removeClass('text-success text-warning text-danger');
-        $('#bookInfoSection').hide();
+        // Not needed anymore
     }
 
     function resetForm() {
         $('#borrowForm')[0].reset();
-        selectedUser = null;
-        selectedBook = null;
-        clearUserData();
-        clearBookData();
         clearError('userError');
         clearError('bookError');
 
         // Reset dates
-        $('#tanggalPinjam').val('{{ date("Y-m-d") }}');
+        $('#tanggal_pinjam').val('{{ date("Y-m-d") }}');
         const defaultReturnDate = new Date();
         defaultReturnDate.setDate(defaultReturnDate.getDate() + 7);
-        $('#batasKembali').val(defaultReturnDate.toISOString().split('T')[0]);
+        $('#batas_kembali').val(defaultReturnDate.toISOString().split('T')[0]);
 
-        // Reset status
+        // Reset status and denda
         $('#status').val('dipinjam');
         $('#denda').val('0.00');
     }
@@ -585,76 +364,9 @@ $(document).ready(function() {
         $('#' + elementId.replace('Error', '')).removeClass('is-invalid');
     }
 
-    function showBorrowingReceipt(borrowingId, user, book, returnDate) {
-        const receiptHtml = `
-            <div class="text-center">
-                <h5>Bukti Peminjaman</h5>
-                <hr>
-                <p><strong>ID Peminjaman:</strong> ${borrowingId}</p>
-                <p><strong>Nama:</strong> ${user.nama_lengkap || user.name}</p>
-                <p><strong>Buku:</strong> ${book.judul_buku || book.title}</p>
-                <p><strong>Tanggal Pinjam:</strong> {{ date('d M Y') }}</p>
-                <p><strong>Batas Kembali:</strong> ${new Date(returnDate).toLocaleDateString('id-ID')}</p>
-                <hr>
-                <small class="text-muted">Harap simpan bukti ini</small>
-            </div>
-        `;
-
-        Swal.fire({
-            title: 'Peminjaman Berhasil',
-            html: receiptHtml,
-            icon: 'success',
-            showCancelButton: true,
-            confirmButtonText: 'Print',
-            cancelButtonText: 'Tutup'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Print functionality could be implemented here
-                window.print();
-            }
-        });
-    }
-
-    function updateTodayBorrowings() {
-        $.ajax({
-            url: '{{ route("petugas.borrow.today") }}',
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    const tbody = $('#todayBorrowingsTable');
-                    tbody.empty();
-
-                    if (response.data.length > 0) {
-                        response.data.forEach((borrowing, index) => {
-                            const row = `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td><span class="badge bg-primary">#${borrowing.borrowing_id}</span></td>
-                                    <td>${borrowing.user_name}</td>
-                                    <td>${borrowing.book_title}</td>
-                                    <td>${borrowing.time}</td>
-                                    <td>${borrowing.batas_kembali}</td>
-                                    <td><span class="badge bg-${borrowing.status_color}">${borrowing.status}</span></td>
-                                </tr>
-                            `;
-                            tbody.append(row);
-                        });
-                    } else {
-                        tbody.append('<tr><td colspan="7" class="text-center text-muted">Belum ada peminjaman hari ini</td></tr>');
-                    }
-                }
-            },
-            error: function(xhr) {
-                console.error('Error updating today borrowings:', xhr);
-            }
-        });
-    }
-
-    // Auto-refresh today's borrowings every 30 seconds
-    setInterval(updateTodayBorrowings, 30000);
-
     // Initialize form
     resetForm();
+});
 });
 </script>
 @endsection

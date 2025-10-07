@@ -65,6 +65,14 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::post('/check-username', [RegisterController::class, 'checkUsername'])->name('check.username');
 Route::post('/check-email', [RegisterController::class, 'checkEmail'])->name('check.email');
 
+// Test route for AJAX
+Route::get('/test-ajax', function () {
+    return view('test_ajax');
+})->name('test.ajax');
+
+// Include test peminjaman routes
+require __DIR__ . '/test_peminjaman.php';
+
 // Test route
 Route::get('/test-register', function () {
     return view('test_register');

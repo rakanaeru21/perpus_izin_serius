@@ -25,15 +25,13 @@ class BorrowController extends Controller
     }
 
     /**
-     * Search user by ID or name
+     * Search user by ID
      */
     public function searchUser(Request $request)
     {
         $query = $request->get('query');
 
         $user = User::where('id_user', $query)
-                   ->orWhere('nama_lengkap', 'LIKE', '%' . $query . '%')
-                   ->orWhere('username', 'LIKE', '%' . $query . '%')
                    ->where('role', 'anggota')
                    ->where('status', 'aktif')
                    ->first();
@@ -41,22 +39,9 @@ class BorrowController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anggota tidak ditemukan atau tidak aktif'
+                'message' => 'User dengan ID tersebut tidak ditemukan atau tidak aktif'
             ]);
         }
-
-        // Get user's borrowing statistics
-        $activeBorrowings = Pinjaman::where('id_user', $user->id_user)
-                                  ->where('status', 'dipinjam')
-                                  ->count();
-
-        $overdueBorrowings = Pinjaman::where('id_user', $user->id_user)
-                                   ->where('status', 'terlambat')
-                                   ->count();
-
-        $totalFines = Pinjaman::where('id_user', $user->id_user)
-                             ->whereIn('status', ['terlambat', 'dikembalikan'])
-                             ->sum('denda');
 
         return response()->json([
             'success' => true,
@@ -65,30 +50,24 @@ class BorrowController extends Controller
                 'nama_lengkap' => $user->nama_lengkap,
                 'username' => $user->username,
                 'email' => $user->email,
-                'status' => $user->status,
-                'active_borrowings' => $activeBorrowings,
-                'overdue_borrowings' => $overdueBorrowings,
-                'total_fines' => $totalFines
+                'status' => $user->status
             ]
         ]);
     }
 
     /**
-     * Search book by ID or title
+     * Search book by ID
      */
     public function searchBook(Request $request)
     {
         $query = $request->get('query');
 
-        $book = Book::where('id_buku', $query)
-                   ->orWhere('kode_buku', $query)
-                   ->orWhere('judul_buku', 'LIKE', '%' . $query . '%')
-                   ->first();
+        $book = Book::where('id_buku', $query)->first();
 
         if (!$book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buku tidak ditemukan'
+                'message' => 'Buku dengan ID tersebut tidak ditemukan'
             ]);
         }
 
@@ -107,8 +86,7 @@ class BorrowController extends Controller
                 'judul_buku' => $book->judul_buku,
                 'penulis' => $book->penulis,
                 'penerbit' => $book->penerbit,
-                'jumlah_tersedia' => $book->jumlah_tersedia,
-                'rak' => $book->rak
+                'jumlah_tersedia' => $book->jumlah_tersedia
             ]
         ]);
     }
@@ -119,39 +97,45 @@ class BorrowController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_user' => 'required|exists:user,id_user',
-            'id_buku' => 'required|exists:buku,id_buku',
+            'id_user' => 'required|string',
+            'id_buku' => 'required|string',
             'batas_kembali' => 'required|date|after:today'
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Check if user exists and is active
-            $user = User::where('id_user', $request->id_user)
-                       ->where('status', 'aktif')
-                       ->where('role', 'anggota')
-                       ->first();
+            // Search user by ID or username
+            $user = User::where(function($query) use ($request) {
+                        $query->where('id_user', $request->id_user)
+                              ->orWhere('username', $request->id_user);
+                    })
+                    ->where('status', 'aktif')
+                    ->where('role', 'anggota')
+                    ->first();
 
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anggota tidak ditemukan atau tidak aktif'
+                    'message' => 'User dengan ID/Username tersebut tidak ditemukan atau tidak aktif'
                 ]);
             }
 
-            // Check if book exists and is available
-            $book = Book::where('id_buku', $request->id_buku)->first();
+            // Search book by ID or kode_buku
+            $book = Book::where(function($query) use ($request) {
+                        $query->where('id_buku', $request->id_buku)
+                              ->orWhere('kode_buku', $request->id_buku);
+                    })->first();
 
             if (!$book || !$book->isAvailable()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Buku tidak tersedia untuk dipinjam'
+                    'message' => 'Buku dengan ID/Kode tersebut tidak ditemukan atau tidak tersedia'
                 ]);
             }
 
             // Check if user has reached borrowing limit (max 3 books)
-            $activeBorrowings = Pinjaman::where('id_user', $request->id_user)
+            $activeBorrowings = Pinjaman::where('id_user', $user->id_user)
                                       ->where('status', 'dipinjam')
                                       ->count();
 
@@ -162,8 +146,8 @@ class BorrowController extends Controller
                 ]);
             }
 
-                        // Check if user has overdue books
-            $overdueBooks = Pinjaman::where('id_user', $request->id_user)
+            // Check if user has overdue books
+            $overdueBooks = Pinjaman::where('id_user', $user->id_user)
                                   ->where('status', 'dipinjam')
                                   ->where('batas_kembali', '<', Carbon::now())
                                   ->count();
@@ -177,8 +161,8 @@ class BorrowController extends Controller
 
             // Create borrowing record
             $pinjaman = Pinjaman::create([
-                'id_user' => $request->id_user,
-                'id_buku' => $request->id_buku,
+                'id_user' => $user->id_user,
+                'id_buku' => $book->id_buku,
                 'tanggal_pinjam' => Carbon::now(),
                 'batas_kembali' => $request->batas_kembali,
                 'status' => 'dipinjam',
