@@ -31,7 +31,7 @@ class BorrowController extends Controller
     {
         $query = $request->get('query');
 
-        $user = User::where('id        _user', $query)
+        $user = User::where('id_user', $query)
                    ->orWhere('nama_lengkap', 'LIKE', '%' . $query . '%')
                    ->orWhere('username', 'LIKE', '%' . $query . '%')
                    ->where('role', 'anggota')
@@ -81,7 +81,7 @@ class BorrowController extends Controller
         $query = $request->get('query');
 
         $book = Book::where('id_buku', $query)
-                   ->orWhere('kod        e_buku', $query)
+                   ->orWhere('kode_buku', $query)
                    ->orWhere('judul_buku', 'LIKE', '%' . $query . '%')
                    ->first();
 
@@ -162,7 +162,7 @@ class BorrowController extends Controller
                 ]);
             }
 
-            // Check if user has overdue books
+                        // Check if user has overdue books
             $overdueBooks = Pinjaman::where('id_user', $request->id_user)
                                   ->where('status', 'dipinjam')
                                   ->where('batas_kembali', '<', Carbon::now())
@@ -179,7 +179,7 @@ class BorrowController extends Controller
             $pinjaman = Pinjaman::create([
                 'id_user' => $request->id_user,
                 'id_buku' => $request->id_buku,
-                'tanggal_pinjam' => Carbon::now()->toDateString(),
+                'tanggal_pinjam' => Carbon::now(),
                 'batas_kembali' => $request->batas_kembali,
                 'status' => 'dipinjam',
                 'denda' => 0.00,
@@ -233,7 +233,7 @@ class BorrowController extends Controller
                     'borrowing_id' => 'PJM' . str_pad($pinjaman->id_peminjaman, 6, '0', STR_PAD_LEFT),
                     'user_name' => $pinjaman->user->nama_lengkap,
                     'book_title' => $pinjaman->book->judul_buku,
-                    'time' => $pinjaman->created_at ? $pinjaman->created_at->format('H:i') : 'N/A',
+                    'time' => $pinjaman->tanggal_pinjam->format('H:i'),
                     'batas_kembali' => $pinjaman->batas_kembali->format('d M Y'),
                     'status' => $pinjaman->formatted_status,
                     'status_color' => $pinjaman->status_color
