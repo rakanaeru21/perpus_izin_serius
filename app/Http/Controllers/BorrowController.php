@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Book;
+use App\Models\User;
 use App\Models\Pinjaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class BorrowController extends Controller
@@ -25,13 +26,16 @@ class BorrowController extends Controller
     }
 
     /**
-     * Search user by ID
+     * Search user by ID or username
      */
     public function searchUser(Request $request)
     {
         $query = $request->get('query');
 
-        $user = User::where('id_user', $query)
+        $user = User::where(function($q) use ($query) {
+                        $q->where('id_user', $query)
+                          ->orWhere('username', $query);
+                    })
                    ->where('role', 'anggota')
                    ->where('status', 'aktif')
                    ->first();
@@ -39,7 +43,7 @@ class BorrowController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'User dengan ID tersebut tidak ditemukan atau tidak aktif'
+                'message' => 'User dengan ID/Username tersebut tidak ditemukan atau tidak aktif'
             ]);
         }
 
@@ -56,18 +60,21 @@ class BorrowController extends Controller
     }
 
     /**
-     * Search book by ID
+     * Search book by ID or kode_buku
      */
     public function searchBook(Request $request)
     {
         $query = $request->get('query');
 
-        $book = Book::where('id_buku', $query)->first();
+        $book = Book::where(function($q) use ($query) {
+                        $q->where('id_buku', $query)
+                          ->orWhere('kode_buku', $query);
+                    })->first();
 
         if (!$book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buku dengan ID tersebut tidak ditemukan'
+                'message' => 'Buku dengan ID/Kode tersebut tidak ditemukan'
             ]);
         }
 
@@ -101,6 +108,9 @@ class BorrowController extends Controller
             'id_buku' => 'required|string',
             'batas_kembali' => 'required|date|after:today'
         ]);
+
+        // Add debugging
+        Log::info('Borrowing request received:', $request->all());
 
         try {
             DB::beginTransaction();
@@ -159,16 +169,29 @@ class BorrowController extends Controller
                 ]);
             }
 
-            // Create borrowing record
-            $pinjaman = Pinjaman::create([
+            // Log the data being inserted for debugging
+            Log::info('Creating peminjaman with data:', [
                 'id_user' => $user->id_user,
                 'id_buku' => $book->id_buku,
-                'tanggal_pinjam' => Carbon::now(),
+                'tanggal_pinjam' => Carbon::now()->format('Y-m-d'),
                 'batas_kembali' => $request->batas_kembali,
                 'status' => 'dipinjam',
                 'denda' => 0.00,
                 'keterangan' => $request->keterangan
             ]);
+
+            // Create borrowing record
+            $pinjaman = Pinjaman::create([
+                'id_user' => $user->id_user,
+                'id_buku' => $book->id_buku,
+                'tanggal_pinjam' => Carbon::now()->format('Y-m-d'),
+                'batas_kembali' => $request->batas_kembali,
+                'status' => 'dipinjam',
+                'denda' => 0.00,
+                'keterangan' => $request->keterangan
+            ]);
+
+            Log::info('Peminjaman created successfully:', ['id_peminjaman' => $pinjaman->id_peminjaman]);
 
             // Update book availability
             $book->decrement('jumlah_tersedia');
@@ -194,6 +217,13 @@ class BorrowController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+
+            Log::error('Error creating peminjaman:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'success' => false,

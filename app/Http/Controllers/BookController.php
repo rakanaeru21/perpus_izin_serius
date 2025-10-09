@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use App\Models\Book;
 use Carbon\Carbon;
 
@@ -48,13 +49,13 @@ class BookController extends Controller
     public function store(Request $request)
     {
         // Debugging log
-        \Log::info('Book store request received');
-        \Log::info('Has file: ' . ($request->hasFile('cover') ? 'Yes' : 'No'));
+        Log::info('Book store request received');
+        Log::info('Has file: ' . ($request->hasFile('cover') ? 'Yes' : 'No'));
 
         if ($request->hasFile('cover')) {
-            \Log::info('File name: ' . $request->file('cover')->getClientOriginalName());
-            \Log::info('File size: ' . $request->file('cover')->getSize());
-            \Log::info('File valid: ' . ($request->file('cover')->isValid() ? 'Yes' : 'No'));
+            Log::info('File name: ' . $request->file('cover')->getClientOriginalName());
+            Log::info('File size: ' . $request->file('cover')->getSize());
+            Log::info('File valid: ' . ($request->file('cover')->isValid() ? 'Yes' : 'No'));
         }
 
         // Validasi input
@@ -83,7 +84,7 @@ class BookController extends Controller
                 // Simpan ke storage/app/public/covers menggunakan public disk
                 $path = $cover->storeAs('covers', $coverName, 'public');
 
-                \Log::info('Cover uploaded to: ' . $path);
+                Log::info('Cover uploaded to: ' . $path);
             }
 
             // Simpan ke database
@@ -108,7 +109,7 @@ class BookController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Book store error: ' . $e->getMessage());
+            Log::error('Book store error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menambahkan buku: ' . $e->getMessage()
@@ -191,7 +192,7 @@ class BookController extends Controller
 
                 // Simpan cover baru menggunakan public disk
                 $path = $cover->storeAs('covers', $coverName, 'public');
-                \Log::info('Cover updated, saved to: ' . $path);
+                Log::info('Cover updated, saved to: ' . $path);
             }
 
             // Update data di database
@@ -217,7 +218,7 @@ class BookController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Book update error: ' . $e->getMessage());
+            Log::error('Book update error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memperbarui buku: ' . $e->getMessage()

@@ -84,7 +84,7 @@ class Book extends Model
      */
     public function peminjaman()
     {
-        return $this->hasMany(Peminjaman::class, 'id_buku', 'id_buku');
+        return $this->hasMany(Pinjaman::class, 'id_buku', 'id_buku');
     }
 
     /**
@@ -92,7 +92,7 @@ class Book extends Model
      */
     public function activeBorrowings()
     {
-        return $this->hasMany(Peminjaman::class, 'id_buku', 'id_buku')
+        return $this->hasMany(Pinjaman::class, 'id_buku', 'id_buku')
             ->where('status', 'dipinjam');
     }
 

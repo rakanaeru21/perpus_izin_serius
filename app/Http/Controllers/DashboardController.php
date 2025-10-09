@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -272,7 +273,7 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('peminjaman')
-                ->where('id_user', auth()->id())
+                ->where('id_user', Auth::id())
                 ->where('status', 'dipinjam')
                 ->count();
         } catch (\Exception $e) {
@@ -309,7 +310,7 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('peminjaman')
-                ->where('id_user', auth()->id())
+                ->where('id_user', Auth::id())
                 ->where(function($query) {
                     $query->where('status', 'terlambat')
                           ->orWhere(function($subQuery) {
@@ -355,7 +356,7 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('peminjaman')
-                ->where('id_user', auth()->id())
+                ->where('id_user', Auth::id())
                 ->count();
         } catch (\Exception $e) {
             return 5;
@@ -369,7 +370,7 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('peminjaman')
-                ->where('id_user', auth()->id())
+                ->where('id_user', Auth::id())
                 ->where('status', 'dikembalikan')
                 ->count();
         } catch (\Exception $e) {
