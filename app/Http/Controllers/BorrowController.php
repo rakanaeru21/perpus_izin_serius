@@ -8,6 +8,7 @@ use App\Models\Pinjaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class BorrowController extends Controller
@@ -103,6 +104,23 @@ class BorrowController extends Controller
      */
     public function store(Request $request)
     {
+        // Log every incoming request with timestamp
+        Log::info('=== BORROWING REQUEST START ===');
+        Log::info('Timestamp: ' . now());
+        Log::info('Request method: ' . $request->method());
+        Log::info('Request URL: ' . $request->fullUrl());
+        Log::info('Request headers:', $request->headers->all());
+        Log::info('All request data:', $request->all());
+        Log::info('Raw input: ' . $request->getContent());
+        Log::info('User authenticated: ' . (Auth::check() ? 'YES' : 'NO'));
+        if (Auth::check()) {
+            Log::info('Current user:', [
+                'id' => Auth::user()->id_user,
+                'username' => Auth::user()->username,
+                'role' => Auth::user()->role
+            ]);
+        }
+
         $request->validate([
             'id_user' => 'required|string',
             'id_buku' => 'required|string',
@@ -110,7 +128,7 @@ class BorrowController extends Controller
         ]);
 
         // Add debugging
-        Log::info('Borrowing request received:', $request->all());
+        Log::info('Borrowing request received after validation:', $request->all());
 
         try {
             DB::beginTransaction();
@@ -201,6 +219,9 @@ class BorrowController extends Controller
             // Load relationships for response
             $pinjaman->load(['user', 'book']);
 
+            Log::info('=== BORROWING SUCCESS ===');
+            Log::info('Created peminjaman ID: ' . $pinjaman->id_peminjaman);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Peminjaman berhasil diproses',
@@ -209,8 +230,8 @@ class BorrowController extends Controller
                     'borrowing_id' => 'PJM' . str_pad($pinjaman->id_peminjaman, 6, '0', STR_PAD_LEFT),
                     'user_name' => $pinjaman->user->nama_lengkap,
                     'book_title' => $pinjaman->book->judul_buku,
-                    'tanggal_pinjam' => $pinjaman->tanggal_pinjam->format('d/m/Y'),
-                    'batas_kembali' => $pinjaman->batas_kembali->format('d/m/Y'),
+                    'tanggal_pinjam' => Carbon::parse($pinjaman->tanggal_pinjam)->format('d/m/Y'),
+                    'batas_kembali' => Carbon::parse($pinjaman->batas_kembali)->format('d/m/Y'),
                     'status' => $pinjaman->formatted_status
                 ]
             ]);
@@ -218,6 +239,7 @@ class BorrowController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
 
+            Log::error('=== BORROWING ERROR ===');
             Log::error('Error creating peminjaman:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -247,8 +269,8 @@ class BorrowController extends Controller
                     'borrowing_id' => 'PJM' . str_pad($pinjaman->id_peminjaman, 6, '0', STR_PAD_LEFT),
                     'user_name' => $pinjaman->user->nama_lengkap,
                     'book_title' => $pinjaman->book->judul_buku,
-                    'time' => $pinjaman->tanggal_pinjam->format('H:i'),
-                    'batas_kembali' => $pinjaman->batas_kembali->format('d M Y'),
+                    'time' => Carbon::parse($pinjaman->tanggal_pinjam)->format('H:i'),
+                    'batas_kembali' => Carbon::parse($pinjaman->batas_kembali)->format('d M Y'),
                     'status' => $pinjaman->formatted_status,
                     'status_color' => $pinjaman->status_color
                 ];

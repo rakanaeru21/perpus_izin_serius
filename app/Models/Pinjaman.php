@@ -10,24 +10,12 @@ class Pinjaman extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     */
     protected $table = 'peminjaman';
-
-    /**
-     * The primary key associated with the table.
-     */
     protected $primaryKey = 'id_peminjaman';
 
-    /**
-     * Indicates if the model should be timestamped.
-     */
-    public $timestamps = false;
+    // Ubah ini untuk menggunakan timestamps Laravel
+    public $timestamps = true;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'id_user',
         'id_buku',
@@ -39,15 +27,14 @@ class Pinjaman extends Model
         'keterangan'
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'tanggal_pinjam' => 'date',
         'batas_kembali' => 'date',
         'tanggal_kembali' => 'date',
         'denda' => 'decimal:2'
     ];
+
+    // ...existing code... (sisanya tetap sama)
 
     /**
      * Relationship with User

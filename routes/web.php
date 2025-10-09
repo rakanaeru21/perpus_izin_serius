@@ -77,3 +77,11 @@ require __DIR__ . '/test_peminjaman.php';
 Route::get('/test-register', function () {
     return view('test_register');
 });
+
+// Test borrow form
+Route::get('/test-borrow', function () {
+    return view('test_borrow_form');
+});
+
+// Test borrow submit without middleware
+Route::post('/test-borrow-submit', [BorrowController::class, 'store'])->name('test.borrow.submit');

@@ -15,7 +15,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <form id="borrowForm">
+                <form id="borrowForm" action="{{ route('petugas.borrow.store') }}" method="POST">
                     @csrf
 
                     <!-- ID User atau Username -->
@@ -196,6 +196,9 @@
     </div>
 </div>
 
+@endsection
+
+@push('scripts')
 <script>
 $(document).ready(function() {
     console.log('Document ready - Form loaded successfully');
@@ -224,6 +227,10 @@ $(document).ready(function() {
     function processBorrowing() {
         const userInput = $('#id_user').val().trim();
         const bookInput = $('#id_buku').val().trim();
+
+        console.log('=== FORM SUBMISSION START ===');
+        console.log('User input:', userInput);
+        console.log('Book input:', bookInput);
 
         if (!userInput) {
             showError('userError', 'ID User atau Username harus diisi');
@@ -262,7 +269,7 @@ $(document).ready(function() {
 
         // Prepare form data
         const formData = {
-            _token: '{{ csrf_token() }}',
+            _token: $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}',
             id_user: userInput,
             id_buku: bookInput,
             tanggal_pinjam: $('#tanggal_pinjam').val(),
@@ -272,13 +279,22 @@ $(document).ready(function() {
             keterangan: $('#keterangan').val().trim() || null
         };
 
-        console.log('Submitting form data:', formData);
+        console.log('=== FORM DATA ===');
+        console.log('CSRF Token:', formData._token);
+        console.log('Form data:', formData);
+        console.log('Route URL:', '{{ route("petugas.borrow.store") }}');
 
         $.ajax({
             url: '{{ route("petugas.borrow.store") }}',
             method: 'POST',
             data: formData,
+            dataType: 'json',
+            beforeSend: function(xhr) {
+                console.log('=== AJAX BEFORE SEND ===');
+                console.log('Request headers:', xhr.getAllResponseHeaders());
+            },
             success: function(response) {
+                console.log('=== AJAX SUCCESS ===');
                 console.log('Form submission response:', response);
                 if (response.success) {
                     Swal.fire({
@@ -293,6 +309,8 @@ $(document).ready(function() {
                         window.location.reload();
                     });
                 } else {
+                    console.log('=== SUCCESS BUT FAILED ===');
+                    console.log('Response message:', response.message);
                     Swal.fire({
                         title: 'Gagal!',
                         text: response.message,
@@ -301,12 +319,20 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                console.log('=== AJAX ERROR ===');
                 console.error('Form submission error:', xhr);
+                console.error('Status:', xhr.status);
+                console.error('Status Text:', xhr.statusText);
+                console.error('Response text:', xhr.responseText);
+                console.error('Response JSON:', xhr.responseJSON);
+
                 let errorMessage = 'Terjadi kesalahan saat memproses peminjaman';
 
                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     // Validation errors
+                    console.log('=== VALIDATION ERRORS ===');
                     const errors = xhr.responseJSON.errors;
+                    console.log('Validation errors:', errors);
                     if (errors.id_user) {
                         showError('userError', errors.id_user[0]);
                     }
@@ -316,6 +342,14 @@ $(document).ready(function() {
                     errorMessage = 'Data yang dimasukkan tidak valid';
                 } else if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Terjadi kesalahan server. Silakan coba lagi.';
+                } else if (xhr.status === 403) {
+                    errorMessage = 'Akses ditolak. Silakan login ulang.';
+                } else if (xhr.status === 401) {
+                    errorMessage = 'Sesi login telah berakhir. Silakan login ulang.';
+                } else if (xhr.status === 419) {
+                    errorMessage = 'Token keamanan tidak valid. Silakan refresh halaman.';
                 }
 
                 Swal.fire({
@@ -325,17 +359,10 @@ $(document).ready(function() {
                 });
             },
             complete: function() {
+                console.log('=== AJAX COMPLETE ===');
                 $('#submitBtn').prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Proses Peminjaman');
             }
         });
-    }
-
-    function clearUserData() {
-        // Not needed anymore
-    }
-
-    function clearBookData() {
-        // Not needed anymore
     }
 
     function resetForm() {
@@ -367,6 +394,5 @@ $(document).ready(function() {
     // Initialize form
     resetForm();
 });
-});
 </script>
-@endsection
+@endpush
