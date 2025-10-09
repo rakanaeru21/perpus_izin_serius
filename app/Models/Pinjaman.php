@@ -24,7 +24,8 @@ class Pinjaman extends Model
         'tanggal_kembali',
         'status',
         'denda',
-        'keterangan'
+        'keterangan',
+        'kondisi_buku'
     ];
 
     protected $casts = [
@@ -168,5 +169,86 @@ class Pinjaman extends Model
         return self::where('status', 'dipinjam')
                   ->where('batas_kembali', '<', Carbon::now())
                   ->update(['status' => 'terlambat']);
+    }
+
+    /**
+     * Process book return
+     */
+    public function processReturn($kondisiBuku = 'baik', $keterangan = null)
+    {
+        $this->tanggal_kembali = Carbon::now()->toDateString();
+        $this->status = 'dikembalikan';
+        $this->kondisi_buku = $kondisiBuku;
+
+        // Calculate fine if overdue
+        if ($this->isOverdue()) {
+            $this->denda = (float) $this->calculateFine();
+        }
+
+        if ($keterangan) {
+            $this->keterangan = $keterangan;
+        }
+
+        $result = $this->save();
+
+        // Update book availability
+        if ($result) {
+            $this->book->increment('jumlah_tersedia');
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get formatted condition
+     */
+    public function getFormattedConditionAttribute()
+    {
+        return match($this->kondisi_buku) {
+            'baik' => 'Baik',
+            'rusak_ringan' => 'Rusak Ringan',
+            'rusak_berat' => 'Rusak Berat',
+            'hilang' => 'Hilang',
+            default => ucfirst($this->kondisi_buku)
+        };
+    }
+
+    /**
+     * Get condition color for UI
+     */
+    public function getConditionColorAttribute()
+    {
+        return match($this->kondisi_buku) {
+            'baik' => 'success',
+            'rusak_ringan' => 'warning',
+            'rusak_berat' => 'danger',
+            'hilang' => 'dark',
+            default => 'secondary'
+        };
+    }
+
+    /**
+     * Scope for returned borrowings today
+     */
+    public function scopeReturnedToday($query)
+    {
+        return $query->where('status', 'dikembalikan')
+                    ->whereDate('tanggal_kembali', Carbon::today());
+    }
+
+    /**
+     * Search by ID or book code
+     */
+    public static function findByIdOrBookCode($search)
+    {
+        return self::with(['user', 'book'])
+                   ->where(function($query) use ($search) {
+                       $query->where('id_peminjaman', $search)
+                             ->orWhereHas('book', function($q) use ($search) {
+                                 $q->where('kode_buku', $search);
+                             });
+                   })
+                   ->where('status', '!=', 'dikembalikan')
+                   ->first();
     }
 }

@@ -49,7 +49,12 @@ Route::prefix('dashboard/petugas')->middleware(['auth', 'role:petugas'])->group(
     Route::post('/borrow/search-book', [BorrowController::class, 'searchBook'])->name('petugas.borrow.search-book');
     Route::post('/borrow', [BorrowController::class, 'store'])->name('petugas.borrow.store');
     Route::get('/borrow/today', [BorrowController::class, 'getTodayBorrowings'])->name('petugas.borrow.today');
-    Route::get('/return', function () { return view('dashboard.petugas.return'); })->name('petugas.return');
+
+    // Return routes
+    Route::get('/return', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'index'])->name('petugas.return');
+    Route::post('/return/search', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'search'])->name('petugas.return.search');
+    Route::post('/return/process', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'processReturn'])->name('petugas.return.process');
+    Route::get('/return/today', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'getTodayReturns'])->name('petugas.return.today');
 });
 
 // Authentication Routes
@@ -73,6 +78,9 @@ Route::get('/test-ajax', function () {
 // Include test peminjaman routes
 require __DIR__ . '/test_peminjaman.php';
 
+// Check data route
+require __DIR__ . '/check_data.php';
+
 // Test route
 Route::get('/test-register', function () {
     return view('test_register');
@@ -81,6 +89,11 @@ Route::get('/test-register', function () {
 // Test borrow form
 Route::get('/test-borrow', function () {
     return view('test_borrow_form');
+});
+
+// Test return form
+Route::get('/test-return', function () {
+    return view('test_return');
 });
 
 // Test borrow submit without middleware
