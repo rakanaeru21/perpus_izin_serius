@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -88,6 +89,24 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.anggota.profile', $data);
+    }
+
+    /**
+     * Anggota data page for Petugas
+     */
+    public function petugasAnggota()
+    {
+        $anggotaList = User::where('role', 'anggota')
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        $statistics = [
+            'totalAnggota' => $anggotaList->count(),
+            'anggotaAktif' => $anggotaList->where('status', 'aktif')->count(),
+            'anggotaNonAktif' => $anggotaList->where('status', 'nonaktif')->count(),
+        ];
+
+        return view('dashboard.petugas.anggota', compact('anggotaList', 'statistics'));
     }
 
     /**

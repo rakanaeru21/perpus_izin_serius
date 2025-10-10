@@ -55,6 +55,9 @@ Route::prefix('dashboard/petugas')->middleware(['auth', 'role:petugas'])->group(
     Route::post('/return/search', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'search'])->name('petugas.return.search');
     Route::post('/return/process', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'processReturn'])->name('petugas.return.process');
     Route::get('/return/today', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'getTodayReturns'])->name('petugas.return.today');
+
+    // Member data routes
+    Route::get('/anggota', [DashboardController::class, 'petugasAnggota'])->name('petugas.anggota');
 });
 
 // Authentication Routes

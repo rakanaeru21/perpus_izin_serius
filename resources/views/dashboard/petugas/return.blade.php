@@ -5,6 +5,51 @@
 @section('user-name', 'Petugas Perpustakaan')
 @section('user-role', 'Petugas')
 
+@section('sidebar-menu')
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('dashboard.petugas') }}">
+            <i class="bi bi-speedometer2 me-2"></i>
+            Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-book me-2"></i>
+            Katalog Buku
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('petugas.borrow') }}">
+            <i class="bi bi-arrow-up-circle me-2"></i>
+            Peminjaman Buku
+        </a>
+    </li>
+    <li class="nav-item active">
+        <a class="nav-link" href="{{ route('petugas.return') }}">
+            <i class="bi bi-arrow-down-circle me-2"></i>
+            Pengembalian Buku
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-people me-2"></i>
+            Data Anggota
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Keterlambatan
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-journal-text me-2"></i>
+            Laporan Harian
+        </a>
+    </li>
+@endsection
+
 @section('content')
 <div class="row mb-4">
     <div class="col-lg-6">
