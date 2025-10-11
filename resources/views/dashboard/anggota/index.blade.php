@@ -131,7 +131,7 @@
         </div>
     </div>
 
-    <div class="row">
+    < class="row">
         <!-- Buku Sedang Dipinjam -->
         <div class="col-lg-8 mb-4">
             <div class="card">
@@ -160,35 +160,7 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-lightning text-primary me-2"></i>
-                        Aksi Cepat
-                    </h5>
-                </div>
-                <div class="card-body">
-                                    <div class="card-body">
-                    <div class="d-grid gap-3">
-                        <a href="{{ route('anggota.catalog') }}" class="btn btn-primary d-flex align-items-center">
-                            <i class="bi bi-book me-2"></i>
-                            Katalog Buku
-                        </a>
-                        <a href="{{ route('anggota.loans') }}" class="btn btn-outline-success d-flex align-items-center">
-                            <i class="bi bi-clock-history me-2"></i>
-                            Pinjaman Saya
-                        </a>
-                        <a href="{{ route('anggota.favorites') }}" class="btn btn-outline-info d-flex align-items-center">
-                            <i class="bi bi-bookmark-heart me-2"></i>
-                            Buku Favorit
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Rekomendasi Buku -->
     <div class="row mb-4">
@@ -232,77 +204,6 @@
         </div>
     </div>
 
-    <!-- Riwayat Pinjaman Terbaru -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-clock-history text-primary me-2"></i>
-                        Riwayat Pinjaman Terbaru
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if(count($riwayatPinjaman) > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Judul Buku</th>
-                                        <th>Tanggal Pinjam</th>
-                                        <th>Batas Kembali</th>
-                                        <th>Tanggal Kembali</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($riwayatPinjaman as $pinjaman)
-                                    <tr>
-                                        <td>{{ $pinjaman['judul'] }}</td>
-                                        <td>{{ date('d M Y', strtotime($pinjaman['tanggal_pinjam'])) }}</td>
-                                        <td>
-                                            @if(isset($pinjaman['batas_kembali']))
-                                                {{ date('d M Y', strtotime($pinjaman['batas_kembali'])) }}
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($pinjaman['tanggal_kembali'])
-                                                {{ date('d M Y', strtotime($pinjaman['tanggal_kembali'])) }}
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($pinjaman['status'] == 'Dikembalikan' || $pinjaman['status'] == 'dikembalikan')
-                                                <span class="badge bg-success">Dikembalikan</span>
-                                            @elseif($pinjaman['status'] == 'Dipinjam' || $pinjaman['status'] == 'dipinjam')
-                                                <span class="badge bg-warning">Dipinjam</span>
-                                            @elseif($pinjaman['status'] == 'terlambat')
-                                                <span class="badge bg-danger">Terlambat</span>
-                                            @else
-                                                <span class="badge bg-secondary">{{ ucfirst($pinjaman['status']) }}</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="{{ route('anggota.loans') }}" class="btn btn-outline-primary">Lihat Semua Riwayat</a>
-                        </div>
-                    @else
-                        <div class="text-center py-4">
-                            <i class="bi bi-journal-x text-muted mb-3" style="font-size: 3rem;"></i>
-                            <p class="text-muted">Belum ada riwayat peminjaman.</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')

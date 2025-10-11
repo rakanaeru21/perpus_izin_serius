@@ -69,7 +69,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card warning">
                 <div class="card-body">
@@ -86,7 +86,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card success">
                 <div class="card-body">
@@ -103,7 +103,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card danger">
                 <div class="card-body">
@@ -140,7 +140,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card secondary">
                 <div class="card-body">
@@ -157,7 +157,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card dark">
                 <div class="card-body">
@@ -174,7 +174,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card light">
                 <div class="card-body">
@@ -195,44 +195,7 @@
 
     <div class="row">
         <!-- Database Structure Information -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-database text-primary me-2"></i>
-                        Struktur Database
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                            <div>
-                                <i class="bi bi-table text-info me-2"></i>
-                                <strong>user</strong>
-                                <br><small class="text-muted">Tabel pengguna (admin, petugas, anggota)</small>
-                            </div>
-                            <span class="badge bg-info rounded-pill">ID: id_user</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                            <div>
-                                <i class="bi bi-table text-success me-2"></i>
-                                <strong>buku</strong>
-                                <br><small class="text-muted">Koleksi buku perpustakaan</small>
-                            </div>
-                            <span class="badge bg-success rounded-pill">ID: id_buku</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                            <div>
-                                <i class="bi bi-table text-warning me-2"></i>
-                                <strong>peminjaman</strong>
-                                <br><small class="text-muted">Transaksi pinjam-kembali</small>
-                            </div>
-                            <span class="badge bg-warning rounded-pill">ID: id_peminjaman</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    
 
         <!-- Charts Section -->
         <div class="col-lg-8 mb-4">
@@ -249,56 +212,7 @@
             </div>
         </div>
 
-        <!-- Recent Activities -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-clock-history text-primary me-2"></i>
-                        Aktivitas Terbaru
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        @foreach($recentActivities as $activity)
-                        <div class="list-group-item border-0">
-                            <div class="d-flex align-items-start">
-                                <div class="me-3">
-                                    @if($activity['type'] == 'return')
-                                        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-arrow-down text-white small"></i>
-                                        </div>
-                                    @elseif($activity['type'] == 'borrow')
-                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-arrow-up text-white small"></i>
-                                        </div>
-                                    @elseif($activity['type'] == 'member')
-                                        <div class="rounded-circle bg-info d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-person-plus text-white small"></i>
-                                        </div>
-                                    @elseif($activity['type'] == 'book')
-                                        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-book-fill text-white small"></i>
-                                        </div>
-                                    @else
-                                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-exclamation text-white small"></i>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 small">{{ $activity['message'] }}</h6>
-                                    <p class="mb-1 text-muted small">{{ $activity['description'] }}</p>
-                                    <small class="text-muted">{{ $activity['time'] }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Quick Actions -->
     <div class="row">
@@ -313,13 +227,13 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <a href="#" class="btn btn-outline-primary d-block py-3">
+                            <a href="{{ route('admin.books') }}" class="btn btn-outline-primary d-block py-3">
                                 <i class="bi bi-plus-circle-fill mb-2" style="font-size: 1.5rem;"></i><br>
                                 Tambah Buku Baru
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="#" class="btn btn-outline-success d-block py-3">
+                            <a href="{{ route('admin.members') }}" class="btn btn-outline-success d-block py-3">
                                 <i class="bi bi-person-plus-fill mb-2" style="font-size: 1.5rem;"></i><br>
                                 Daftar Anggota Baru
                             </a>
@@ -353,14 +267,14 @@
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             datasets: [{
                 label: 'Peminjaman',
-                data: [65, 59, 80, 81, 56, 55, 70, 85, 90, 75, 82, 88],
+                data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 borderColor: '#667eea',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 tension: 0.4,
                 fill: true
             }, {
                 label: 'Pengembalian',
-                data: [60, 55, 75, 79, 52, 50, 65, 80, 85, 70, 78, 85],
+                data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 borderColor: '#56ab2f',
                 backgroundColor: 'rgba(86, 171, 47, 0.1)',
                 tension: 0.4,

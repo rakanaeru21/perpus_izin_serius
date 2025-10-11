@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\BorrowController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -29,7 +30,10 @@ Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(func
     Route::delete('/books/{id}', [BookController::class, 'destroy'])->name('admin.books.destroy');
 
     // Other Admin Routes
-    Route::get('/members', function () { return view('dashboard.admin.members'); })->name('admin.members');
+    Route::get('/members', [AdminController::class, 'members'])->name('admin.members');
+    Route::get('/members/{id}', [AdminController::class, 'showMember'])->name('admin.members.show');
+    Route::put('/members/{id}/status', [AdminController::class, 'updateMemberStatus'])->name('admin.members.status');
+    Route::delete('/members/{id}', [AdminController::class, 'deleteMember'])->name('admin.members.delete');
     Route::get('/reports', function () { return view('dashboard.admin.reports'); })->name('admin.reports');
 });
 
