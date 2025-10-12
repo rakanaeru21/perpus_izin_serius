@@ -67,14 +67,6 @@
                             <i class="bi bi-plus-circle me-1"></i>
                             Tambah Buku Baru
                         </button>
-                        <button class="btn btn-outline-success">
-                            <i class="bi bi-download me-1"></i>
-                            Import Buku
-                        </button>
-                        <button class="btn btn-outline-info" onclick="generateBookCode()">
-                            <i class="bi bi-qr-code me-1"></i>
-                            Generate Kode
-                        </button>
                     </div>
                     <div class="d-flex gap-2">
                         <select class="form-select" id="categoryFilter" style="width: auto;">
@@ -89,7 +81,7 @@
                         <input type="text" class="form-control" id="searchBooks" placeholder="Cari buku..." style="width: 250px;">
                     </div>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-hover" id="booksTable">
                         <thead class="table-light">
@@ -113,17 +105,17 @@
                                 <tr>
                                     <td>
                                         @if($book->cover && $book->cover !== 'default_cover.png')
-                                            <img src="{{ asset('storage/covers/' . $book->cover) }}" 
-                                                 alt="Cover" 
-                                                 class="rounded" 
+                                            <img src="{{ asset('storage/covers/' . $book->cover) }}"
+                                                 alt="Cover"
+                                                 class="rounded"
                                                  style="width: 40px; height: 50px; object-fit: cover;"
                                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                            <div class="bg-secondary rounded align-items-center justify-content-center text-white" 
+                                            <div class="bg-secondary rounded align-items-center justify-content-center text-white"
                                                  style="width: 40px; height: 50px; font-size: 10px; display: none;">
                                                 No Cover
                                             </div>
                                         @else
-                                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" 
+                                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white"
                                                  style="width: 40px; height: 50px; font-size: 10px;">
                                                 No Cover
                                             </div>
@@ -157,15 +149,15 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
                                                     onclick="viewBook({{ $book->id_buku }})" title="Lihat Detail">
                                                 <i class="bi bi-eye"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
                                                     onclick="editBook({{ $book->id_buku }})" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
                                                     onclick="deleteBook({{ $book->id_buku }})" title="Hapus">
                                                 <i class="bi bi-trash"></i>
                                             </button>
@@ -233,13 +225,13 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="judul_buku" class="form-label">Judul Buku <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="judul_buku" name="judul_buku" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="penulis" class="form-label">Penulis <span class="text-danger">*</span></label>
@@ -251,41 +243,41 @@
                             <input type="text" class="form-control" id="penerbit" name="penerbit">
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="tahun_terbit" class="form-label">Tahun Terbit</label>
-                            <input type="number" class="form-control" id="tahun_terbit" name="tahun_terbit" 
+                            <input type="number" class="form-control" id="tahun_terbit" name="tahun_terbit"
                                    min="1900" max="{{ date('Y') }}">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="jumlah_total" class="form-label">Jumlah Total <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="jumlah_total" name="jumlah_total" 
+                            <input type="number" class="form-control" id="jumlah_total" name="jumlah_total"
                                    min="1" value="1" required>
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="jumlah_tersedia" class="form-label">Jumlah Tersedia <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="jumlah_tersedia" name="jumlah_tersedia" 
+                            <input type="number" class="form-control" id="jumlah_tersedia" name="jumlah_tersedia"
                                    min="0" value="1" required>
                             <div class="invalid-feedback"></div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="rak" class="form-label">Lokasi Rak</label>
                         <input type="text" class="form-control" id="rak" name="rak" placeholder="Contoh: A-01, B-15">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="deskripsi" class="form-label">Deskripsi</label>
-                        <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3" 
+                        <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3"
                                   placeholder="Deskripsi singkat tentang buku..."></textarea>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="cover" class="form-label">Cover Buku</label>
-                        <input type="file" class="form-control" id="cover" name="cover" 
+                        <input type="file" class="form-control" id="cover" name="cover"
                                accept="image/jpeg,image/png,image/jpg,image/gif">
                         <div class="form-text">Format: JPG, PNG, GIF. Maksimal 2MB.</div>
                         <div class="invalid-feedback"></div>
@@ -334,11 +326,11 @@ $.ajaxSetup({
 // Add Book Form Submission
 $('#addBookForm').on('submit', function(e) {
     e.preventDefault();
-    
+
     let formData = new FormData(this);
     let submitBtn = $(this).find('button[type="submit"]');
     let originalText = submitBtn.html();
-    
+
     // Debug: Check if file is selected
     let fileInput = $('#cover')[0];
     if (fileInput.files.length > 0) {
@@ -347,19 +339,19 @@ $('#addBookForm').on('submit', function(e) {
     } else {
         console.log('No file selected');
     }
-    
+
     // Debug: Log form data
     for (let pair of formData.entries()) {
         console.log(pair[0] + ': ' + pair[1]);
     }
-    
+
     // Show loading state
     submitBtn.html('<i class="bi bi-hourglass-split me-1"></i> Menyimpan...').prop('disabled', true);
-    
+
     // Clear previous errors
     $('.is-invalid').removeClass('is-invalid');
     $('.invalid-feedback').empty();
-    
+
     $.ajax({
         url: '{{ route("admin.books.store") }}',
         type: 'POST',
@@ -370,7 +362,7 @@ $('#addBookForm').on('submit', function(e) {
             if (response.success) {
                 $('#addBookModal').modal('hide');
                 $('#addBookForm')[0].reset();
-                
+
                 // Show success message
                 Swal.fire({
                     icon: 'success',
@@ -379,7 +371,7 @@ $('#addBookForm').on('submit', function(e) {
                     timer: 2000,
                     showConfirmButton: false
                 });
-                
+
                 // Reload page to show new data
                 setTimeout(function() {
                     location.reload();
@@ -440,19 +432,19 @@ function viewBook(id) {
                 let content = `
                     <div class="row">
                         <div class="col-md-4 text-center">
-                            ${book.cover && book.cover !== 'default_cover.png' ? 
-                                `<img src="/storage/covers/${book.cover}" 
+                            ${book.cover && book.cover !== 'default_cover.png' ?
+                                `<img src="/storage/covers/${book.cover}"
                                      alt="Cover" class="img-fluid rounded shadow"
                                      style="max-height: 300px;"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                 <div class="bg-secondary rounded align-items-center justify-content-center text-white" 
+                                 <div class="bg-secondary rounded align-items-center justify-content-center text-white"
                                       style="width: 200px; height: 300px; margin: 0 auto; display: none;">
                                      <div class="text-center">
                                          <i class="bi bi-book" style="font-size: 3rem;"></i><br>
                                          No Cover Available
                                      </div>
                                  </div>` :
-                                `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" 
+                                `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white"
                                      style="width: 200px; height: 300px; margin: 0 auto;">
                                     <div class="text-center">
                                         <i class="bi bi-book" style="font-size: 3rem;"></i><br>
@@ -526,7 +518,7 @@ function deleteBook(id) {
                             timer: 2000,
                             showConfirmButton: false
                         });
-                        
+
                         // Remove row from table
                         $(`button[onclick="deleteBook(${id})"]`).closest('tr').fadeOut();
                     }
@@ -561,7 +553,7 @@ function searchBooks(query) {
         location.reload();
         return;
     }
-    
+
     $.ajax({
         url: '/dashboard/admin/books/search',
         type: 'GET',
@@ -581,7 +573,7 @@ function searchBooks(query) {
 function updateBooksTable(books) {
     let tbody = $('#booksTable tbody');
     tbody.empty();
-    
+
     if (books.length === 0) {
         tbody.append(`
             <tr>
@@ -596,30 +588,30 @@ function updateBooksTable(books) {
         `);
         return;
     }
-    
+
     books.forEach(function(book) {
-        let statusBadge = book.jumlah_tersedia > 0 
-            ? '<span class="badge bg-success">Tersedia</span>' 
+        let statusBadge = book.jumlah_tersedia > 0
+            ? '<span class="badge bg-success">Tersedia</span>'
             : '<span class="badge bg-danger">Habis</span>';
-            
-        let categoryBadge = book.kategori 
-            ? `<span class="badge bg-secondary">${book.kategori}</span>` 
+
+        let categoryBadge = book.kategori
+            ? `<span class="badge bg-secondary">${book.kategori}</span>`
             : '<span class="text-muted">-</span>';
-        
+
         tbody.append(`
             <tr>
                 <td>
-                    ${book.cover && book.cover !== 'default_cover.png' ? 
-                        `<img src="/storage/covers/${book.cover}" 
-                             alt="Cover" 
-                             class="rounded" 
+                    ${book.cover && book.cover !== 'default_cover.png' ?
+                        `<img src="/storage/covers/${book.cover}"
+                             alt="Cover"
+                             class="rounded"
                              style="width: 40px; height: 50px; object-fit: cover;"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                         <div class="bg-secondary rounded align-items-center justify-content-center text-white" 
+                         <div class="bg-secondary rounded align-items-center justify-content-center text-white"
                               style="width: 40px; height: 50px; font-size: 10px; display: none;">
                              No Cover
                          </div>` :
-                        `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" 
+                        `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white"
                              style="width: 40px; height: 50px; font-size: 10px;">
                             No Cover
                         </div>`
@@ -639,15 +631,15 @@ function updateBooksTable(books) {
                 <td>${statusBadge}</td>
                 <td>
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                        <button type="button" class="btn btn-sm btn-outline-primary"
                                 onclick="viewBook(${book.id_buku})" title="Lihat Detail">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                        <button type="button" class="btn btn-sm btn-outline-warning"
                                 onclick="editBook(${book.id_buku})" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                        <button type="button" class="btn btn-sm btn-outline-danger"
                                 onclick="deleteBook(${book.id_buku})" title="Hapus">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -675,7 +667,7 @@ function debounce(func, wait) {
 $('#jumlah_total').on('input', function() {
     let total = parseInt($(this).val()) || 0;
     let tersedia = parseInt($('#jumlah_tersedia').val()) || 0;
-    
+
     if (tersedia > total) {
         $('#jumlah_tersedia').val(total);
     }
@@ -684,7 +676,7 @@ $('#jumlah_total').on('input', function() {
 // Initialize tooltips
 $(document).ready(function() {
     $('[title]').tooltip();
-    
+
     // Generate code on modal open if field is empty
     $('#addBookModal').on('shown.bs.modal', function() {
         if ($('#kode_buku').val() === '') {

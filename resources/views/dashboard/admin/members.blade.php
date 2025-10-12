@@ -7,7 +7,7 @@
 
 @section('sidebar-menu')
     <li class="nav-item">
-        <a class="nav-link active" href="{{ route('dashboard.admin') }}">
+        <a class="nav-link " href="{{ route('dashboard.admin') }}">
             <i class="bi bi-speedometer2 me-2"></i>
             Dashboard
         </a>
@@ -19,7 +19,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('admin.members') }}">
+        <a class="nav-link active" href="{{ route('admin.members') }}">
             <i class="bi bi-people me-2"></i>
             Manajemen Anggota
         </a>
@@ -66,10 +66,6 @@
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
                             <i class="bi bi-person-plus me-1"></i>
                             Tambah Anggota Baru
-                        </button>
-                        <button class="btn btn-outline-success">
-                            <i class="bi bi-download me-1"></i>
-                            Import Anggota
                         </button>
                     </div>
                     <div class="d-flex gap-2">
@@ -142,11 +138,72 @@
                 </div>
 
                 <!-- Pagination -->
-                @if(isset($members) && $members->hasPages())
-                <div class="d-flex justify-content-center mt-3">
-                    {{ $members->links() }}
+                <div id="paginationWrapper" class="mt-4">
+                    @if(isset($members) && $members->hasPages())
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="pagination-info">
+                            <small class="text-muted">
+                                Menampilkan {{ $members->firstItem() }} sampai {{ $members->lastItem() }}
+                                dari {{ $members->total() }} hasil
+                            </small>
+                        </div>
+                        <div class="pagination-controls">
+                            <nav aria-label="Navigasi halaman anggota">
+                                <ul class="pagination pagination-sm mb-0">
+                                    {{-- Previous Page Link --}}
+                                    @if ($members->onFirstPage())
+                                        <li class="page-item disabled">
+                                            <span class="page-link">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </span>
+                                        </li>
+                                    @else
+                                        <li class="page-item">
+                                            <a class="page-link" href="javascript:void(0)" onclick="loadMembers({{ $members->currentPage() - 1 }})">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    @endif
+
+                                    {{-- Pagination Elements --}}
+                                    @foreach ($members->getUrlRange(1, $members->lastPage()) as $page => $url)
+                                        @if ($page == $members->currentPage())
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ $page }}</span>
+                                            </li>
+                                        @else
+                                            <li class="page-item">
+                                                <a class="page-link" href="javascript:void(0)" onclick="loadMembers({{ $page }})">{{ $page }}</a>
+                                            </li>
+                                        @endif
+                                    @endforeach
+
+                                    {{-- Next Page Link --}}
+                                    @if ($members->hasMorePages())
+                                        <li class="page-item">
+                                            <a class="page-link" href="javascript:void(0)" onclick="loadMembers({{ $members->currentPage() + 1 }})">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    @else
+                                        <li class="page-item disabled">
+                                            <span class="page-link">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    @elseif(isset($members) && $members->count() > 0)
+                    <div class="pagination-info">
+                        <small class="text-muted">
+                            Menampilkan {{ $members->count() }} hasil
+                        </small>
+                    </div>
+                    @endif
                 </div>
-                @endif
             </div>
         </div>
     </div>
@@ -184,6 +241,81 @@
 </div>
 
 @push('scripts')
+<style>
+/* Custom pagination styles */
+.pagination-controls .pagination {
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-controls .page-link {
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    padding: 0.5rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 0.25rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.pagination-controls .page-link:hover {
+    background-color: #e9ecef;
+    color: #495057;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-controls .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.25);
+}
+
+.pagination-controls .page-item.disabled .page-link {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+/* Responsive pagination */
+@media (max-width: 576px) {
+    #paginationWrapper .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center !important;
+    }
+
+    .pagination-controls .page-link {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .pagination-info {
+        text-align: center;
+    }
+}
+
+/* Loading state */
+.pagination-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.pagination-loading .page-link {
+    cursor: wait;
+}
+</style>
+
 <script>
 let searchTimeout;
 
@@ -205,6 +337,21 @@ $(document).ready(function() {
 function loadMembers(page = 1) {
     const search = $('#searchInput').val();
     const status = $('#statusFilter').val();
+    const paginationWrapper = $('#paginationWrapper');
+    const tableBody = $('#membersTableBody');
+
+    // Show loading state
+    paginationWrapper.addClass('pagination-loading');
+    tableBody.html(`
+        <tr>
+            <td colspan="7" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                Memuat data...
+            </td>
+        </tr>
+    `);
 
     $.ajax({
         url: '{{ route("admin.members") }}',
@@ -220,9 +367,34 @@ function loadMembers(page = 1) {
         success: function(response) {
             updateMembersTable(response.members);
             updatePagination(response.pagination);
+
+            // Scroll to top of table if not first page
+            if (page > 1) {
+                $('html, body').animate({
+                    scrollTop: $('.table-responsive').offset().top - 100
+                }, 300);
+            }
         },
         error: function(xhr) {
             console.error('Error loading members:', xhr);
+            tableBody.html(`
+                <tr>
+                    <td colspan="7" class="text-center text-danger py-4">
+                        <i class="bi bi-exclamation-triangle display-4 d-block mb-2"></i>
+                        Terjadi kesalahan saat memuat data. Silakan coba lagi.
+                        <br>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadMembers(${page})">
+                            <i class="bi bi-arrow-clockwise me-1"></i>
+                            Coba Lagi
+                        </button>
+                    </td>
+                </tr>
+            `);
+            updatePagination(null);
+        },
+        complete: function() {
+            // Remove loading state
+            paginationWrapper.removeClass('pagination-loading');
         }
     });
 }
@@ -287,8 +459,147 @@ function updateMembersTable(members) {
 }
 
 function updatePagination(pagination) {
-    // Update pagination if needed
-    // This is a simplified version - you might want to implement a more complete pagination
+    const wrapper = $('#paginationWrapper');
+
+    if (!pagination || pagination.last_page <= 1) {
+        wrapper.html(`
+            <div class="pagination-info">
+                <small class="text-muted">
+                    Menampilkan ${pagination ? pagination.total : 0} hasil
+                </small>
+            </div>
+        `);
+        return;
+    }
+
+    const currentPage = pagination.current_page;
+    const lastPage = pagination.last_page;
+    const total = pagination.total;
+    const perPage = pagination.per_page;
+
+    const firstItem = ((currentPage - 1) * perPage) + 1;
+    const lastItem = Math.min(currentPage * perPage, total);
+
+    let paginationHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="pagination-info">
+                <small class="text-muted">
+                    Menampilkan ${firstItem} sampai ${lastItem} dari ${total} hasil
+                </small>
+            </div>
+            <div class="pagination-controls">
+                <nav aria-label="Navigasi halaman anggota">
+                    <ul class="pagination pagination-sm mb-0">
+    `;
+
+    // Previous button
+    if (currentPage === 1) {
+        paginationHTML += `
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="bi bi-chevron-left"></i>
+                </span>
+            </li>
+        `;
+    } else {
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="javascript:void(0)" onclick="loadMembers(${currentPage - 1})">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        `;
+    }
+
+    // Page numbers
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(lastPage, currentPage + 2);
+
+    // Adjust if we're near the beginning or end
+    if (endPage - startPage < 4) {
+        if (startPage === 1) {
+            endPage = Math.min(lastPage, startPage + 4);
+        } else if (endPage === lastPage) {
+            startPage = Math.max(1, endPage - 4);
+        }
+    }
+
+    // First page and ellipsis
+    if (startPage > 1) {
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="javascript:void(0)" onclick="loadMembers(1)">1</a>
+            </li>
+        `;
+        if (startPage > 2) {
+            paginationHTML += `
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `;
+        }
+    }
+
+    // Page range
+    for (let page = startPage; page <= endPage; page++) {
+        if (page === currentPage) {
+            paginationHTML += `
+                <li class="page-item active">
+                    <span class="page-link">${page}</span>
+                </li>
+            `;
+        } else {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="javascript:void(0)" onclick="loadMembers(${page})">${page}</a>
+                </li>
+            `;
+        }
+    }
+
+    // Last page and ellipsis
+    if (endPage < lastPage) {
+        if (endPage < lastPage - 1) {
+            paginationHTML += `
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `;
+        }
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="javascript:void(0)" onclick="loadMembers(${lastPage})">${lastPage}</a>
+            </li>
+        `;
+    }
+
+    // Next button
+    if (currentPage === lastPage) {
+        paginationHTML += `
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+            </li>
+        `;
+    } else {
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="javascript:void(0)" onclick="loadMembers(${currentPage + 1})">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        `;
+    }
+
+    paginationHTML += `
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    `;
+
+    wrapper.html(paginationHTML);
 }
 
 function viewMember(id) {
