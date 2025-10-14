@@ -8,6 +8,7 @@ use App\Http\Controllers\BorrowController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AnggotaController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -41,7 +42,9 @@ Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(func
 Route::prefix('dashboard/anggota')->middleware(['auth', 'role:anggota'])->group(function () {
     Route::get('/catalog', function () { return view('dashboard.anggota.catalog'); })->name('anggota.catalog');
     Route::get('/catalog/api', [BookController::class, 'catalog'])->name('anggota.catalog.api');
-    Route::get('/loans', function () { return view('dashboard.anggota.loans'); })->name('anggota.loans');
+    Route::get('/loans', [AnggotaController::class, 'loans'])->name('anggota.loans');
+    Route::post('/loans/extend', [AnggotaController::class, 'extendLoan'])->name('anggota.loans.extend');
+    Route::get('/loan-history', [AnggotaController::class, 'loanHistory'])->name('anggota.loan-history');
     Route::get('/favorites', function () { return view('dashboard.anggota.favorites'); })->name('anggota.favorites');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('anggota.profile');
 });
