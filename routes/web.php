@@ -36,7 +36,15 @@ Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(func
     Route::get('/members/{id}', [AdminController::class, 'showMember'])->name('admin.members.show');
     Route::put('/members/{id}/status', [AdminController::class, 'updateMemberStatus'])->name('admin.members.status');
     Route::delete('/members/{id}', [AdminController::class, 'deleteMember'])->name('admin.members.delete');
-    Route::get('/reports', function () { return view('dashboard.admin.reports'); })->name('admin.reports');
+
+    // Report Routes
+    Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('admin.reports');
+    Route::get('/reports/daily', [App\Http\Controllers\ReportController::class, 'generateDaily'])->name('admin.reports.daily');
+    Route::get('/reports/weekly', [App\Http\Controllers\ReportController::class, 'generateWeekly'])->name('admin.reports.weekly');
+    Route::get('/reports/monthly', [App\Http\Controllers\ReportController::class, 'generateMonthly'])->name('admin.reports.monthly');
+    Route::get('/reports/yearly', [App\Http\Controllers\ReportController::class, 'generateYearly'])->name('admin.reports.yearly');
+    Route::get('/reports/stats/borrowing', [App\Http\Controllers\ReportController::class, 'getBorrowingStats'])->name('admin.reports.stats.borrowing');
+    Route::get('/reports/stats/category', [App\Http\Controllers\ReportController::class, 'getCategoryStats'])->name('admin.reports.stats.category');
 });
 
 // Anggota specific routes
