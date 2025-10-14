@@ -431,6 +431,20 @@ class BookController extends Controller
             $offset = ($page - 1) * $perPage;
             $books = $query->offset($offset)->limit($perPage)->get();
 
+            // Add comments data to each book
+            $books = $books->map(function ($book) {
+                // Get average rating and comments count
+                $commentsData = DB::table('book_comments')
+                    ->where('id_buku', $book->id_buku)
+                    ->selectRaw('AVG(rating) as average_rating, COUNT(*) as comments_count')
+                    ->first();
+
+                $book->average_rating = $commentsData ? round($commentsData->average_rating, 1) : 0;
+                $book->comments_count = $commentsData ? $commentsData->comments_count : 0;
+
+                return $book;
+            });
+
             // Calculate pagination info
             $totalPages = ceil($total / $perPage);
 

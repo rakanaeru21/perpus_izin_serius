@@ -226,6 +226,81 @@
 .book-cover-container .bg-gradient {
     box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
 }
+
+/* Rating Stars Styles */
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-stars .star {
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6c757d;
+}
+
+.rating-stars .star:hover {
+    transform: scale(1.1);
+}
+
+.rating-stars .star.bi-star-fill {
+    color: #ffc107 !important;
+}
+
+/* Comment Item Styles */
+.comment-item {
+    transition: background-color 0.2s ease;
+}
+
+.comment-item:hover {
+    background-color: rgba(0,0,0,0.02);
+    border-radius: 8px;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+.comment-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Modal Enhancements */
+.modal-dialog {
+    max-width: 800px;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Button hover effects */
+.btn-outline-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(25, 135, 84, 0.2);
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(13, 110, 253, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 95%;
+        margin: 10px auto;
+    }
+
+    .rating-stars .star {
+        font-size: 1rem;
+    }
+
+    .comment-item {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}
 </style>
 @endpush
 
@@ -410,6 +485,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <p class="card-text small text-muted mb-2">
                                     <i class="bi bi-tag me-1"></i>${book.kategori ? book.kategori.charAt(0).toUpperCase() + book.kategori.slice(1) : 'Tidak ada kategori'}
                                 </p>
+                                ${book.average_rating > 0 ? `
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>${book.average_rating.toFixed(1)} (${book.comments_count} ulasan)
+                                </p>
+                                ` : ''}
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge ${book.jumlah_tersedia > 0 ? 'bg-success' : 'bg-danger'}">
                                         ${book.jumlah_tersedia > 0 ? 'Tersedia' : 'Tidak Tersedia'}
@@ -419,12 +499,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         <div class="mt-3">
-                            <button class="btn btn-outline-primary btn-sm w-100"
-                                    onclick="lihatDetailBuku(${book.id_buku})"
-                                    title="Klik untuk melihat detail buku">
-                                <i class="bi bi-eye me-1"></i>
-                                Lihat Detail
-                            </button>
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <button class="btn btn-outline-primary btn-sm w-100"
+                                            onclick="lihatDetailBuku(${book.id_buku})"
+                                            title="Klik untuk melihat detail buku">
+                                        <i class="bi bi-eye me-1"></i>
+                                        Lihat Detail
+                                    </button>
+                                </div>
+                                <div class="col-4">
+                                    <button class="btn btn-outline-success btn-sm w-100"
+                                            onclick="lihatKomentarBuku(${book.id_buku})"
+                                            title="Klik untuk melihat dan memberikan komentar">
+                                        <i class="bi bi-chat-dots"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -646,6 +737,338 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(`Fitur peminjaman buku ID ${bookId} akan segera tersedia!`);
         console.log('Pinjam buku dengan ID:', bookId);
     };
+
+    // Function to handle book comments
+    window.lihatKomentarBuku = function(bookId) {
+        // Find the book data
+        const book = currentBooks.find(b => b.id_buku == bookId);
+
+        if (book) {
+            // Create and show comments modal
+            showCommentsModal(book);
+        } else {
+            alert('Buku tidak ditemukan!');
+        }
+    };
+
+    // Function to create and show comments modal
+    function showCommentsModal(book) {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('commentsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create comments modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="commentsModalLabel">
+                                <i class="bi bi-chat-dots me-2"></i>
+                                Komentar untuk "${book.judul_buku}"
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Add Comment Form -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-plus-circle me-2"></i>
+                                        Tambah Komentar
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <form id="addCommentForm" onsubmit="submitComment(event, ${book.id_buku})">
+                                        <div class="mb-3">
+                                            <label for="commentRating" class="form-label">Rating</label>
+                                            <div class="d-flex align-items-center">
+                                                <div class="rating-stars me-3" id="ratingStars">
+                                                    <i class="bi bi-star star" data-rating="1"></i>
+                                                    <i class="bi bi-star star" data-rating="2"></i>
+                                                    <i class="bi bi-star star" data-rating="3"></i>
+                                                    <i class="bi bi-star star" data-rating="4"></i>
+                                                    <i class="bi bi-star star" data-rating="5"></i>
+                                                </div>
+                                                <span id="ratingText" class="text-muted">Pilih rating</span>
+                                                <input type="hidden" id="selectedRating" name="rating" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="commentText" class="form-label">Komentar</label>
+                                            <textarea class="form-control" id="commentText" name="comment" rows="4"
+                                                    placeholder="Bagikan pendapat Anda tentang buku ini..." required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-send me-1"></i>
+                                            Kirim Komentar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Comments List -->
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-chat-text me-2"></i>
+                                        Komentar Pengguna
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="commentsList">
+                                        <div class="text-center py-4">
+                                            <div class="spinner-border text-primary mb-3" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="text-muted">Memuat komentar...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Initialize rating functionality
+        initializeRatingSystem();
+
+        // Load existing comments
+        loadComments(book.id_buku);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('commentsModal'));
+        modal.show();
+
+        // Clean up when modal is closed
+        document.getElementById('commentsModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+
+    // Function to initialize rating system
+    function initializeRatingSystem() {
+        const stars = document.querySelectorAll('.star');
+        const ratingText = document.getElementById('ratingText');
+        const selectedRating = document.getElementById('selectedRating');
+        let currentRating = 0;
+
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                currentRating = parseInt(this.dataset.rating);
+                selectedRating.value = currentRating;
+                updateStars(currentRating);
+                updateRatingText(currentRating);
+            });
+
+            star.addEventListener('mouseover', function() {
+                const hoverRating = parseInt(this.dataset.rating);
+                updateStars(hoverRating);
+                updateRatingText(hoverRating);
+            });
+        });
+
+        document.getElementById('ratingStars').addEventListener('mouseleave', function() {
+            updateStars(currentRating);
+            updateRatingText(currentRating);
+        });
+
+        function updateStars(rating) {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('bi-star');
+                    star.classList.add('bi-star-fill');
+                    star.style.color = '#ffc107';
+                } else {
+                    star.classList.remove('bi-star-fill');
+                    star.classList.add('bi-star');
+                    star.style.color = '#6c757d';
+                }
+            });
+        }
+
+        function updateRatingText(rating) {
+            const texts = {
+                0: 'Pilih rating',
+                1: 'Sangat Buruk',
+                2: 'Buruk',
+                3: 'Cukup',
+                4: 'Bagus',
+                5: 'Sangat Bagus'
+            };
+            ratingText.textContent = texts[rating];
+        }
+    }
+
+    // Function to submit comment
+    window.submitComment = function(event, bookId) {
+        event.preventDefault();
+
+        const rating = document.getElementById('selectedRating').value;
+        const commentText = document.getElementById('commentText').value;
+
+        if (rating == 0) {
+            alert('Silakan pilih rating terlebih dahulu!');
+            return;
+        }
+
+        if (!commentText.trim()) {
+            alert('Silakan isi komentar terlebih dahulu!');
+            return;
+        }
+
+        // Show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Mengirim...';
+        submitBtn.disabled = true;
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('id_buku', bookId);
+        formData.append('rating', rating);
+        formData.append('comment', commentText);
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        // Send to API
+        fetch('{{ route("anggota.books.comments.store") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reset form
+                document.getElementById('addCommentForm').reset();
+                document.getElementById('selectedRating').value = 0;
+                document.getElementById('ratingText').textContent = 'Pilih rating';
+                document.querySelectorAll('.star').forEach(star => {
+                    star.classList.remove('bi-star-fill');
+                    star.classList.add('bi-star');
+                    star.style.color = '#6c757d';
+                });
+
+                // Show success message
+                alert(data.message);
+
+                // Reload comments
+                loadComments(bookId);
+            } else {
+                alert(data.message || 'Terjadi kesalahan saat mengirim komentar');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mengirim komentar');
+        })
+        .finally(() => {
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    };
+
+    // Function to load comments
+    function loadComments(bookId) {
+        const commentsList = document.getElementById('commentsList');
+
+        // Show loading state
+        commentsList.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted">Memuat komentar...</p>
+            </div>
+        `;
+
+        // Fetch comments from API
+        fetch(`{{ url('dashboard/anggota/books') }}/${bookId}/comments`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const comments = data.data.comments;
+
+                    if (comments.length === 0) {
+                        commentsList.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="bi bi-chat-square-text text-muted mb-3" style="font-size: 3rem;"></i>
+                                <h6 class="text-muted">Belum ada komentar</h6>
+                                <p class="text-muted">Jadilah yang pertama memberikan komentar untuk buku ini!</p>
+                            </div>
+                        `;
+                    } else {
+                        let commentsHtml = '';
+                        comments.forEach(comment => {
+                            const stars = Array(5).fill(0).map((_, i) =>
+                                i < comment.rating
+                                    ? '<i class="bi bi-star-fill text-warning"></i>'
+                                    : '<i class="bi bi-star text-muted"></i>'
+                            ).join('');
+
+                            const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+
+                            commentsHtml += `
+                                <div class="comment-item border-bottom py-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="mb-1">${comment.user_name}</h6>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2">${stars}</div>
+                                                <small class="text-muted">(${comment.rating}/5)</small>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">${commentDate}</small>
+                                    </div>
+                                    <p class="mb-0 text-dark">${comment.comment}</p>
+                                </div>
+                            `;
+                        });
+                        commentsList.innerHTML = commentsHtml;
+                    }
+                } else {
+                    commentsList.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="bi bi-exclamation-circle text-warning mb-3" style="font-size: 3rem;"></i>
+                            <h6 class="text-warning">Gagal memuat komentar</h6>
+                            <p class="text-muted">${data.message || 'Terjadi kesalahan saat memuat komentar'}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching comments:', error);
+                commentsList.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
+                        <h6 class="text-danger">Terjadi kesalahan</h6>
+                        <p class="text-muted">Tidak dapat memuat komentar. Silakan coba lagi nanti.</p>
+                    </div>
+                `;
+            });
+    }
 });
 </script>
 @endpush

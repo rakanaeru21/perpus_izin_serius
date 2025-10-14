@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AnggotaController;
+use App\Http\Controllers\BookCommentController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -47,6 +48,12 @@ Route::prefix('dashboard/anggota')->middleware(['auth', 'role:anggota'])->group(
     Route::get('/loan-history', [AnggotaController::class, 'loanHistory'])->name('anggota.loan-history');
     Route::get('/favorites', function () { return view('dashboard.anggota.favorites'); })->name('anggota.favorites');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('anggota.profile');
+
+    // Book Comments API Routes
+    Route::get('/books/{bookId}/comments', [BookCommentController::class, 'getComments'])->name('anggota.books.comments');
+    Route::post('/books/comments', [BookCommentController::class, 'store'])->name('anggota.books.comments.store');
+    Route::put('/books/comments/{id}', [BookCommentController::class, 'update'])->name('anggota.books.comments.update');
+    Route::delete('/books/comments/{id}', [BookCommentController::class, 'destroy'])->name('anggota.books.comments.destroy');
 });
 
 // Petugas specific routes

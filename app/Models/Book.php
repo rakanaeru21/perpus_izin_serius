@@ -156,4 +156,40 @@ class Book extends Model
         }
         return 'success';
     }
+
+    /**
+     * Relationship with book comments
+     */
+    public function comments()
+    {
+        return $this->hasMany(BookComment::class, 'id_buku', 'id_buku');
+    }
+
+    /**
+     * Get average rating for this book
+     */
+    public function getAverageRatingAttribute()
+    {
+        return $this->comments()->avg('rating') ?? 0;
+    }
+
+    /**
+     * Get total comments count for this book
+     */
+    public function getCommentsCountAttribute()
+    {
+        return $this->comments()->count();
+    }
+
+    /**
+     * Get latest comments for this book
+     */
+    public function latestComments($limit = 5)
+    {
+        return $this->comments()
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
 }
