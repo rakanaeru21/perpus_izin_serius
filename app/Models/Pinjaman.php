@@ -167,8 +167,8 @@ class Pinjaman extends Model
     public static function updateOverdueStatus()
     {
         return self::where('status', 'dipinjam')
-                  ->where('batas_kembali', '<', Carbon::now())
-                  ->update(['status' => 'terlambat']);
+                ->where('batas_kembali', '<', Carbon::now())
+                ->update(['status' => 'terlambat']);
     }
 
     /**

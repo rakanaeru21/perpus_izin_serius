@@ -119,6 +119,14 @@ class AnggotaController extends Controller
             ->orderBy('tanggal_pinjam', 'desc')
             ->paginate(10);
 
-        return view('dashboard.anggota.loan-history', compact('loanHistory'));
+        // Get statistics for all loans (not just paginated)
+        $statistics = [
+            'total' => Pinjaman::where('id_user', $userId)->count(),
+            'dikembalikan' => Pinjaman::where('id_user', $userId)->where('status', 'dikembalikan')->count(),
+            'terlambat' => Pinjaman::where('id_user', $userId)->where('status', 'terlambat')->count(),
+            'sedang_dipinjam' => Pinjaman::where('id_user', $userId)->whereIn('status', ['dipinjam', 'terlambat'])->count()
+        ];
+
+        return view('dashboard.anggota.loan-history', compact('loanHistory', 'statistics'));
     }
 }
