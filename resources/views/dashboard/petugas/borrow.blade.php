@@ -42,12 +42,6 @@
             Keterlambatan
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="bi bi-journal-text me-2"></i>
-            Laporan Harian
-        </a>
-    </li>
 @endsection
 
 @section('content')

@@ -31,7 +31,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="#">
+        <a class="nav-link" href="{{ route('petugas.anggota') }}">
             <i class="bi bi-people me-2"></i>
             Data Anggota
         </a>
@@ -40,12 +40,6 @@
         <a class="nav-link" href="#">
             <i class="bi bi-exclamation-triangle me-2"></i>
             Keterlambatan
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="bi bi-journal-text me-2"></i>
-            Laporan Harian
         </a>
     </li>
 @endsection

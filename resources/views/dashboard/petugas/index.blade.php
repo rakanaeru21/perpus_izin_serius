@@ -31,7 +31,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="#">
+        <a class="nav-link" href="{{ route('petugas.anggota') }}">
             <i class="bi bi-people me-2"></i>
             Data Anggota
         </a>
@@ -40,12 +40,6 @@
         <a class="nav-link" href="#">
             <i class="bi bi-exclamation-triangle me-2"></i>
             Keterlambatan
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="bi bi-journal-text me-2"></i>
-            Laporan Harian
         </a>
     </li>
 @endsection
@@ -68,7 +62,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card warning">
                 <div class="card-body">
@@ -84,7 +78,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card success">
                 <div class="card-body">
@@ -100,7 +94,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card">
                 <div class="card-body">
@@ -118,97 +112,6 @@
         </div>
     </div>
 
-    <div class="row">
-        <!-- Quick Actions -->
-        <div class="col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-lightning text-primary me-2"></i>
-                        Aksi Cepat
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <a href="#" class="btn btn-primary d-block py-4" style="height: 120px;">
-                                <i class="bi bi-plus-circle-fill mb-2" style="font-size: 2rem;"></i><br>
-                                <strong>Pinjaman Baru</strong><br>
-                                <small>Proses peminjaman buku</small>
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="#" class="btn btn-success d-block py-4" style="height: 120px;">
-                                <i class="bi bi-check-circle-fill mb-2" style="font-size: 2rem;"></i><br>
-                                <strong>Pengembalian</strong><br>
-                                <small>Proses pengembalian buku</small>
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="#" class="btn btn-info d-block py-4" style="height: 120px;">
-                                <i class="bi bi-search mb-2" style="font-size: 2rem;"></i><br>
-                                <strong>Cari Buku</strong><br>
-                                <small>Pencarian katalog buku</small>
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="#" class="btn btn-warning d-block py-4" style="height: 120px;">
-                                <i class="bi bi-exclamation-triangle-fill mb-2" style="font-size: 2rem;"></i><br>
-                                <strong>Cek Keterlambatan</strong><br>
-                                <small>Daftar buku terlambat</small>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activities -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-clock-history text-primary me-2"></i>
-                        Aktivitas Hari Ini
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        @foreach($recentActivities as $activity)
-                        <div class="list-group-item border-0">
-                            <div class="d-flex align-items-start">
-                                <div class="me-3">
-                                    @if($activity['type'] == 'return')
-                                        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-arrow-down text-white small"></i>
-                                        </div>
-                                    @elseif($activity['type'] == 'borrow')
-                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-arrow-up text-white small"></i>
-                                        </div>
-                                    @elseif($activity['type'] == 'member')
-                                        <div class="rounded-circle bg-info d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-person-plus text-white small"></i>
-                                        </div>
-                                    @else
-                                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-exclamation text-white small"></i>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 small">{{ $activity['message'] }}</h6>
-                                    <p class="mb-1 text-muted small">{{ $activity['description'] }}</p>
-                                    <small class="text-muted">{{ $activity['time'] }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Peminjaman Terbaru -->
     <div class="row">
