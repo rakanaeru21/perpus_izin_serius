@@ -52,6 +52,64 @@
         margin-bottom: 1rem;
         opacity: 0.5;
     }
+
+    .filter-btn {
+        border-radius: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .filter-btn.active {
+        background-color: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+    }
+
+    .filter-btn:hover:not(.active) {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    #searchInput:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .table tbody tr[style*="display: none"] {
+        display: none !important;
+    }
+
+    mark.bg-warning {
+        background-color: #fff3cd !important;
+        color: #664d03;
+        padding: 0 2px;
+        border-radius: 2px;
+    }
+
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-help {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .keyboard-shortcut {
+        background-color: #e9ecef;
+        padding: 0.125rem 0.25rem;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.75rem;
+    }
 </style>
 @endpush
 
@@ -175,14 +233,83 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title mb-0">
                             <i class="bi bi-list-ul text-primary me-2"></i>
                             Peminjaman Terbaru
                         </h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="refreshTable()" title="Refresh Data">
-                            <i class="bi bi-arrow-clockwise"></i>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-success btn-sm" onclick="exportData()" title="Export Data">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshTable()" title="Refresh Data">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter dan Search -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text"
+                                       class="form-control"
+                                       id="searchInput"
+                                       placeholder="Cari nama peminjam, judul buku, atau ID pinjaman..."
+                                       onkeyup="filterTable()">
+                            </div>
+                            <div class="search-help">
+                                <span class="keyboard-shortcut">Ctrl+F</span> untuk fokus pencarian,
+                                <span class="keyboard-shortcut">Esc</span> untuk reset filter
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-select" id="statusFilter" onchange="filterTable()">
+                                <option value="">Semua Status</option>
+                                <option value="dipinjam">Dipinjam</option>
+                                <option value="terlambat">Terlambat</option>
+                                <option value="dikembalikan">Dikembalikan</option>
+                                <option value="hilang">Hilang</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Status Filter Buttons -->
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button class="btn btn-outline-secondary btn-sm filter-btn active" data-status="" onclick="quickFilter('')">
+                            <i class="bi bi-list-ul me-1"></i>
+                            Semua <span class="badge bg-secondary ms-1" id="count-all">{{ $peminjamanTerbaru->count() }}</span>
                         </button>
+                        <button class="btn btn-outline-warning btn-sm filter-btn" data-status="dipinjam" onclick="quickFilter('dipinjam')">
+                            <i class="bi bi-arrow-up-circle me-1"></i>
+                            Dipinjam <span class="badge bg-warning ms-1" id="count-dipinjam">{{ $peminjamanTerbaru->where('status', 'dipinjam')->count() }}</span>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm filter-btn" data-status="terlambat" onclick="quickFilter('terlambat')">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Terlambat <span class="badge bg-danger ms-1" id="count-terlambat">{{ $peminjamanTerbaru->where('status', 'terlambat')->count() }}</span>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm filter-btn" data-status="dikembalikan" onclick="quickFilter('dikembalikan')">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Dikembalikan <span class="badge bg-success ms-1" id="count-dikembalikan">{{ $peminjamanTerbaru->where('status', 'dikembalikan')->count() }}</span>
+                        </button>
+                        <button class="btn btn-outline-dark btn-sm filter-btn" data-status="hilang" onclick="quickFilter('hilang')">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Hilang <span class="badge bg-dark ms-1" id="count-hilang">{{ $peminjamanTerbaru->where('status', 'hilang')->count() }}</span>
+                        </button>
+                    </div>
+
+                    <!-- Results Info -->
+                    <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+                        <small class="text-muted" id="resultsInfo">
+                            Menampilkan {{ $peminjamanTerbaru->count() }} dari {{ $peminjamanTerbaru->count() }} data
+                        </small>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Klik pada filter untuk memfilter data
+                        </small>
                     </div>
                 </div>
                 <div class="card-body">
@@ -199,9 +326,10 @@
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tableBody">
                                 @forelse($peminjamanTerbaru as $peminjaman)
-                                <tr>
+                                <tr data-status="{{ $peminjaman->status }}"
+                                    data-search="{{ strtolower($peminjaman->nama_lengkap . ' ' . $peminjaman->judul_buku . ' PJM' . str_pad($peminjaman->id_peminjaman, 3, '0', STR_PAD_LEFT)) }}">
                                     <td><span class="badge bg-primary">#PJM{{ str_pad($peminjaman->id_peminjaman, 3, '0', STR_PAD_LEFT) }}</span></td>
                                     <td>{{ $peminjaman->nama_lengkap }}</td>
                                     <td>{{ $peminjaman->judul_buku }}</td>
@@ -256,7 +384,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
+                                <tr id="emptyState">
                                     <td colspan="7" class="text-center empty-state">
                                         <div class="py-4">
                                             <i class="bi bi-inbox-fill d-block"></i>
@@ -266,6 +394,21 @@
                                     </td>
                                 </tr>
                                 @endforelse
+
+                                <!-- No Results Found State -->
+                                <tr id="noResultsState" style="display: none;">
+                                    <td colspan="7" class="text-center empty-state">
+                                        <div class="py-4">
+                                            <i class="bi bi-search d-block"></i>
+                                            <h6 class="mb-2">Tidak ada hasil yang ditemukan</h6>
+                                            <p class="text-muted mb-0">Coba ubah kata kunci pencarian atau filter status</p>
+                                            <button class="btn btn-outline-primary btn-sm mt-2" onclick="clearFilters()">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                                Reset Filter
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -337,6 +480,154 @@
         location.reload();
     }
 
+    // Function untuk export data (basic CSV export)
+    function exportData() {
+        const rows = document.querySelectorAll('#tableBody tr[data-status]');
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+
+        if (visibleRows.length === 0) {
+            alert('Tidak ada data untuk diekspor');
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "ID Pinjaman,Nama Peminjam,Judul Buku,Tanggal Pinjam,Tanggal Kembali,Status\n";
+
+        visibleRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const rowData = [
+                cells[0].textContent.trim(),
+                cells[1].textContent.trim(),
+                cells[2].textContent.trim(),
+                cells[3].textContent.trim(),
+                cells[4].textContent.trim(),
+                cells[5].textContent.trim()
+            ];
+            csvContent += rowData.map(field => `"${field}"`).join(',') + '\n';
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `peminjaman_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Function untuk filter table berdasarkan pencarian dan status
+    function filterTable() {
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const tableBody = document.getElementById('tableBody');
+        const rows = tableBody.querySelectorAll('tr[data-status]');
+        const emptyState = document.getElementById('emptyState');
+        const noResultsState = document.getElementById('noResultsState');
+
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const searchData = row.getAttribute('data-search');
+            const statusData = row.getAttribute('data-status');
+
+            const matchesSearch = searchData.includes(searchTerm);
+            const matchesStatus = statusValue === '' || statusData === statusValue;
+
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Update filter button states
+        updateFilterButtons(statusValue);
+
+        // Show/hide empty states
+        if (visibleCount === 0) {
+            if (emptyState) emptyState.style.display = 'none';
+            noResultsState.style.display = '';
+        } else {
+            if (emptyState) emptyState.style.display = 'none';
+            noResultsState.style.display = 'none';
+        }
+
+        // Update counter badges
+        updateCounters();
+    }
+
+    // Function untuk quick filter berdasarkan status
+    function quickFilter(status) {
+        const statusFilter = document.getElementById('statusFilter');
+        statusFilter.value = status;
+        filterTable();
+    }
+
+    // Function untuk clear semua filter
+    function clearFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+
+        searchInput.value = '';
+        statusFilter.value = '';
+
+        filterTable();
+    }
+
+    // Function untuk update filter button states
+    function updateFilterButtons(activeStatus) {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        filterButtons.forEach(btn => {
+            const btnStatus = btn.getAttribute('data-status');
+            if (btnStatus === activeStatus) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // Function untuk update counter badges
+    function updateCounters() {
+        const tableBody = document.getElementById('tableBody');
+        const rows = tableBody.querySelectorAll('tr[data-status]');
+
+        const counters = {
+            all: 0,
+            dipinjam: 0,
+            terlambat: 0,
+            dikembalikan: 0,
+            hilang: 0
+        };
+
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const status = row.getAttribute('data-status');
+                counters.all++;
+                if (counters[status] !== undefined) {
+                    counters[status]++;
+                }
+            }
+        });
+
+        // Update badge text
+        document.getElementById('count-all').textContent = counters.all;
+        document.getElementById('count-dipinjam').textContent = counters.dipinjam;
+        document.getElementById('count-terlambat').textContent = counters.terlambat;
+        document.getElementById('count-dikembalikan').textContent = counters.dikembalikan;
+        document.getElementById('count-hilang').textContent = counters.hilang;
+
+        // Update results info
+        const totalRows = rows.length;
+        document.getElementById('resultsInfo').textContent =
+            `Menampilkan ${counters.all} dari ${totalRows} data`;
+    }
+
     // Format tanggal untuk display
     function formatDate(dateString) {
         const date = new Date(dateString);
@@ -366,6 +657,81 @@
     }
 
     // Jalankan update status saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', updateStatus);
+    document.addEventListener('DOMContentLoaded', function() {
+        updateStatus();
+        updateCounters();
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + F untuk focus ke search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+
+            // Escape untuk clear filters
+            if (e.key === 'Escape') {
+                clearFilters();
+            }
+        });
+
+        // Auto-focus search when typing
+        document.addEventListener('keypress', function(e) {
+            const searchInput = document.getElementById('searchInput');
+            if (document.activeElement !== searchInput &&
+                e.key.match(/[a-zA-Z0-9\s]/) &&
+                !e.ctrlKey &&
+                !e.metaKey) {
+                searchInput.focus();
+                searchInput.value = e.key;
+                filterTable();
+            }
+        });
+
+        // Highlight search terms
+        highlightSearchTerms();
+    });
+
+    // Function untuk highlight search terms
+    function highlightSearchTerms() {
+        const searchInput = document.getElementById('searchInput');
+        let originalData = new Map(); // Store original cell content
+
+        // Store original content
+        document.querySelectorAll('#tableBody tr[data-status] td').forEach(cell => {
+            if (!cell.querySelector('.badge') && !cell.querySelector('button')) {
+                originalData.set(cell, cell.textContent);
+            }
+        });
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#tableBody tr[data-status]');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach(cell => {
+                    // Skip cells with badges or buttons
+                    if (cell.querySelector('.badge') || cell.querySelector('button')) return;
+
+                    const originalText = originalData.get(cell) || cell.textContent;
+
+                    if (searchTerm && originalText.toLowerCase().includes(searchTerm)) {
+                        const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+                        cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning">$1</mark>');
+                    } else {
+                        cell.textContent = originalText;
+                    }
+                });
+            });
+
+            filterTable();
+        });
+    }
+
+    // Function untuk escape regex characters
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 </script>
 @endpush
