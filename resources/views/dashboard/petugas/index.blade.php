@@ -1,3 +1,60 @@
+@push('styles')
+<style>
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+    }
+
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-sm:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .empty-state {
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+@endpush
+
 @extends('layouts.dashboard')
 
 @section('title', 'Dashboard Petugas')
@@ -118,10 +175,15 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-list-ul text-primary me-2"></i>
-                        Peminjaman Terbaru
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-list-ul text-primary me-2"></i>
+                            Peminjaman Terbaru
+                        </h5>
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshTable()" title="Refresh Data">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -138,65 +200,86 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @forelse($peminjamanTerbaru as $peminjaman)
                                 <tr>
-                                    <td><span class="badge bg-primary">#PJM001</span></td>
-                                    <td>Ahmad Fauzi</td>
-                                    <td>Harry Potter and the Sorcerer's Stone</td>
-                                    <td>01 Oct 2025</td>
-                                    <td>08 Oct 2025</td>
-                                    <td><span class="badge bg-warning">Dipinjam</span></td>
+                                    <td><span class="badge bg-primary">#PJM{{ str_pad($peminjaman->id_peminjaman, 3, '0', STR_PAD_LEFT) }}</span></td>
+                                    <td>{{ $peminjaman->nama_lengkap }}</td>
+                                    <td>{{ $peminjaman->judul_buku }}</td>
+                                    <td>{{ $peminjaman->tanggal_pinjam ? \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('d M Y') : '-' }}</td>
+                                    <td>{{ $peminjaman->batas_kembali ? \Carbon\Carbon::parse($peminjaman->batas_kembali)->format('d M Y') : '-' }}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-check2"></i> Kembalikan
-                                        </button>
+                                        @if($peminjaman->status === 'dipinjam')
+                                            <span class="badge bg-warning"
+                                                  title="Buku sedang dipinjam, batas kembali: {{ $peminjaman->batas_kembali ? \Carbon\Carbon::parse($peminjaman->batas_kembali)->format('d M Y') : '-' }}">
+                                                Dipinjam
+                                            </span>
+                                        @elseif($peminjaman->status === 'dikembalikan')
+                                            <span class="badge bg-success"
+                                                  title="Buku telah dikembalikan pada: {{ $peminjaman->tanggal_kembali ? \Carbon\Carbon::parse($peminjaman->tanggal_kembali)->format('d M Y') : '-' }}">
+                                                Dikembalikan
+                                            </span>
+                                        @elseif($peminjaman->status === 'terlambat')
+                                            @php
+                                                $daysLate = $peminjaman->batas_kembali ? \Carbon\Carbon::parse($peminjaman->batas_kembali)->diffInDays(\Carbon\Carbon::now(), false) : 0;
+                                            @endphp
+                                            <span class="badge bg-danger"
+                                                  title="Terlambat {{ $daysLate }} hari dari tanggal {{ $peminjaman->batas_kembali ? \Carbon\Carbon::parse($peminjaman->batas_kembali)->format('d M Y') : '-' }}">
+                                                Terlambat
+                                            </span>
+                                        @elseif($peminjaman->status === 'hilang')
+                                            <span class="badge bg-dark" title="Buku dilaporkan hilang">Hilang</span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ ucfirst($peminjaman->status) }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($peminjaman->status === 'dipinjam' || $peminjaman->status === 'terlambat')
+                                            <button class="btn btn-sm btn-outline-success"
+                                                    onclick="returnBook({{ $peminjaman->id_peminjaman }})"
+                                                    title="Kembalikan Buku">
+                                                <i class="bi bi-check2"></i> Kembalikan
+                                            </button>
+                                            @if($peminjaman->status === 'terlambat')
+                                                <button class="btn btn-sm btn-outline-warning ms-1"
+                                                        onclick="remindUser({{ $peminjaman->id_peminjaman }})"
+                                                        title="Kirim Pengingat">
+                                                    <i class="bi bi-envelope"></i> Ingatkan
+                                                </button>
+                                            @endif
+                                        @elseif($peminjaman->status === 'dikembalikan')
+                                            <button class="btn btn-sm btn-outline-info"
+                                                    onclick="viewDetail({{ $peminjaman->id_peminjaman }})"
+                                                    title="Lihat Detail">
+                                                <i class="bi bi-eye"></i> Detail
+                                            </button>
+                                        @endif
                                     </td>
                                 </tr>
+                                @empty
                                 <tr>
-                                    <td><span class="badge bg-primary">#PJM002</span></td>
-                                    <td>Siti Nurhaliza</td>
-                                    <td>The Great Gatsby</td>
-                                    <td>02 Oct 2025</td>
-                                    <td>09 Oct 2025</td>
-                                    <td><span class="badge bg-warning">Dipinjam</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-check2"></i> Kembalikan
-                                        </button>
+                                    <td colspan="7" class="text-center empty-state">
+                                        <div class="py-4">
+                                            <i class="bi bi-inbox-fill d-block"></i>
+                                            <h6 class="mb-2">Belum ada data peminjaman</h6>
+                                            <p class="text-muted mb-0">Data peminjaman akan muncul di sini setelah ada transaksi peminjaman buku</p>
+                                        </div>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td><span class="badge bg-primary">#PJM003</span></td>
-                                    <td>Budi Santoso</td>
-                                    <td>1984</td>
-                                    <td>28 Sep 2025</td>
-                                    <td>05 Oct 2025</td>
-                                    <td><span class="badge bg-danger">Terlambat</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-check2"></i> Kembalikan
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-envelope"></i> Ingatkan
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-secondary">#PJM004</span></td>
-                                    <td>Dian Sastro</td>
-                                    <td>To Kill a Mockingbird</td>
-                                    <td>30 Sep 2025</td>
-                                    <td>01 Oct 2025</td>
-                                    <td><span class="badge bg-success">Dikembalikan</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-eye"></i> Detail
-                                        </button>
-                                    </td>
-                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
+                @if($peminjamanTerbaru->count() >= 10)
+                <div class="card-footer bg-light">
+                    <div class="text-center">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>
+                            Lihat Semua Peminjaman
+                        </a>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -208,5 +291,81 @@
     // setInterval(function() {
     //     location.reload();
     // }, 300000); // Refresh setiap 5 menit
+
+    // Function untuk mengembalikan buku
+    function returnBook(peminjamanId) {
+        if (confirm('Apakah Anda yakin ingin mengembalikan buku ini?')) {
+            // Redirect ke halaman pengembalian dengan ID peminjaman
+            window.location.href = "{{ route('petugas.return') }}?id=" + peminjamanId;
+        }
+    }
+
+    // Function untuk mengirim pengingat
+    function remindUser(peminjamanId) {
+        if (confirm('Kirim pengingat ke peminjam?')) {
+            // AJAX call untuk mengirim pengingat
+            fetch(`/petugas/remind/${peminjamanId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Pengingat berhasil dikirim!');
+                } else {
+                    alert('Gagal mengirim pengingat. Silakan coba lagi.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan. Silakan coba lagi.');
+            });
+        }
+    }
+
+    // Function untuk melihat detail
+    function viewDetail(peminjamanId) {
+        // Redirect ke halaman detail peminjaman
+        window.location.href = `/petugas/peminjaman/detail/${peminjamanId}`;
+    }
+
+    // Function untuk refresh table
+    function refreshTable() {
+        location.reload();
+    }
+
+    // Format tanggal untuk display
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit'
+        };
+        return date.toLocaleDateString('id-ID', options);
+    }
+
+    // Update status badge berdasarkan kondisi
+    function updateStatus() {
+        const today = new Date();
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const statusBadge = row.querySelector('.badge');
+            const batasKembali = row.cells[4].textContent;
+
+            if (statusBadge && statusBadge.textContent === 'Dipinjam') {
+                const dueDate = new Date(batasKembali);
+                if (today > dueDate) {
+                    statusBadge.className = 'badge bg-danger';
+                    statusBadge.textContent = 'Terlambat';
+                }
+            }
+        });
+    }
+
+    // Jalankan update status saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', updateStatus);
 </script>
 @endpush
