@@ -54,8 +54,14 @@ Route::prefix('dashboard/anggota')->middleware(['auth', 'role:anggota'])->group(
     Route::get('/loans', [AnggotaController::class, 'loans'])->name('anggota.loans');
     Route::post('/loans/extend', [AnggotaController::class, 'extendLoan'])->name('anggota.loans.extend');
     Route::get('/loan-history', [AnggotaController::class, 'loanHistory'])->name('anggota.loan-history');
-    Route::get('/favorites', function () { return view('dashboard.anggota.favorites'); })->name('anggota.favorites');
+    Route::get('/favorites', [DashboardController::class, 'favorites'])->name('anggota.favorites');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('anggota.profile');
+
+    // Favorites API Routes
+    Route::post('/favorites/add', [DashboardController::class, 'addToFavorites'])->name('anggota.favorites.add');
+    Route::post('/favorites/remove', [DashboardController::class, 'removeFromFavorites'])->name('anggota.favorites.remove');
+    Route::post('/favorites/toggle', [DashboardController::class, 'toggleFavorite'])->name('anggota.favorites.toggle');
+    Route::post('/favorites/check', [DashboardController::class, 'checkFavoriteStatus'])->name('anggota.favorites.check');
 
     // Book Comments API Routes
     Route::get('/books/{bookId}/comments', [BookCommentController::class, 'getComments'])->name('anggota.books.comments');

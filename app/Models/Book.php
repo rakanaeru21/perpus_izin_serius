@@ -192,4 +192,29 @@ class Book extends Model
             ->limit($limit)
             ->get();
     }
+
+    /**
+     * Get the users who have favorited this book.
+     */
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'id_buku');
+    }
+
+    /**
+     * Get the users who have favorited this book.
+     */
+    public function favoritedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'favorites', 'id_buku', 'user_id', 'id_buku', 'id_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the total number of users who favorited this book.
+     */
+    public function getFavoritesCountAttribute()
+    {
+        return $this->favorites()->count();
+    }
 }

@@ -285,6 +285,35 @@
     box-shadow: 0 2px 5px rgba(13, 110, 253, 0.2);
 }
 
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Favorite button animations */
+.favorite-btn {
+    transition: all 0.2s ease;
+}
+
+.favorite-btn:hover {
+    transform: translateY(-1px) scale(1.05);
+}
+
+.favorite-btn.btn-danger {
+    background: linear-gradient(45deg, #dc3545, #ff6b7d);
+    border: none;
+    color: white;
+}
+
+.favorite-btn.btn-danger:hover {
+    background: linear-gradient(45deg, #c82333, #ff5a6b);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .modal-dialog {
@@ -500,19 +529,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="mt-3">
                             <div class="row g-2">
-                                <div class="col-8">
+                                <div class="col-6">
                                     <button class="btn btn-outline-primary btn-sm w-100"
                                             onclick="lihatDetailBuku(${book.id_buku})"
                                             title="Klik untuk melihat detail buku">
                                         <i class="bi bi-eye me-1"></i>
-                                        Lihat Detail
+                                        Detail
                                     </button>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
                                     <button class="btn btn-outline-success btn-sm w-100"
                                             onclick="lihatKomentarBuku(${book.id_buku})"
                                             title="Klik untuk melihat dan memberikan komentar">
                                         <i class="bi bi-chat-dots"></i>
+                                    </button>
+                                </div>
+                                <div class="col-3">
+                                    <button class="btn btn-outline-danger btn-sm w-100 favorite-btn"
+                                            data-book-id="${book.id_buku}"
+                                            title="Tambah ke favorit">
+                                        <i class="bi bi-heart"></i>
                                     </button>
                                 </div>
                             </div>
@@ -522,6 +558,12 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             catalog.appendChild(bookCard);
         });
+
+        // Initialize favorite buttons after rendering
+        initializeFavoriteButtons();
+
+        // Check favorite status for all books
+        checkFavoriteStatus();
     }
 
     function renderPagination(pagination) {
@@ -1068,6 +1110,134 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             });
+    }
+
+    // Check favorite status for all rendered books
+    function checkFavoriteStatus() {
+        const bookIds = currentBooks.map(book => book.id_buku);
+
+        if (bookIds.length === 0) return;
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        // Check favorite status for all books
+        fetch('{{ route("anggota.favorites.check") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                book_ids: bookIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update favorite buttons based on status
+                data.favorites.forEach(bookId => {
+                    const button = document.querySelector(`[data-book-id="${bookId}"]`);
+                    if (button) {
+                        button.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        button.classList.remove('btn-outline-danger');
+                        button.classList.add('btn-danger');
+                        button.title = 'Hapus dari favorit';
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error checking favorite status:', error);
+        });
+    }
+
+    // Initialize favorite buttons after books are rendered
+    function initializeFavoriteButtons() {
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        // Add event listeners to favorite buttons
+        document.querySelectorAll('.favorite-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const bookId = this.dataset.bookId;
+                toggleFavorite(bookId, this);
+            });
+        });
+
+        function toggleFavorite(bookId, button) {
+            // Show loading state
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            button.disabled = true;
+
+            fetch('{{ route("anggota.favorites.toggle") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    book_id: bookId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button appearance
+                    if (data.is_favorite) {
+                        button.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        button.classList.remove('btn-outline-danger');
+                        button.classList.add('btn-danger');
+                        button.title = 'Hapus dari favorit';
+                    } else {
+                        button.innerHTML = '<i class="bi bi-heart"></i>';
+                        button.classList.remove('btn-danger');
+                        button.classList.add('btn-outline-danger');
+                        button.title = 'Tambah ke favorit';
+                    }
+
+                    // Show success message
+                    showNotification(data.message, 'success');
+                } else {
+                    // Show error message
+                    showNotification(data.message || 'Terjadi kesalahan', 'error');
+                    button.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan saat mengubah favorit', 'error');
+                button.innerHTML = originalContent;
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            // Add to page
+            document.body.appendChild(notification);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
     }
 });
 </script>

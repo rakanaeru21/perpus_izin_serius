@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Book;
 use App\Models\BookComment;
+use App\Models\Favorite;
 
 class DashboardController extends Controller
 {
@@ -73,6 +74,7 @@ class DashboardController extends Controller
             'bukuDipinjam' => $this->getBukuDipinjamUser(),
             'riwayatPinjaman' => $this->getRiwayatPinjaman(),
             'keterlambatan' => $this->getKeterlambatanUser(),
+            'favoritesCount' => $this->getFavoritesCount(),
             'rekomendasiBuku' => $this->getRekomendasiBuku(),
             'bukuTerpopuler' => $this->getBukuTerpopuler(),
             'bukuByKategori' => $this->getBukuByKategori(),
@@ -699,6 +701,239 @@ class DashboardController extends Controller
                 (object)['kategori' => 'Sains', 'total_buku' => 12],
                 (object)['kategori' => 'Psikologi', 'total_buku' => 8]
             ]);
+        }
+    }
+
+    /**
+     * Display favorites page for anggota
+     */
+    public function favorites()
+    {
+        $user = Auth::user();
+
+        // Get favorites with book details and ratings
+        $favorites = DB::table('favorites')
+            ->join('buku', 'favorites.id_buku', '=', 'buku.id_buku')
+            ->leftJoin('book_comments', 'buku.id_buku', '=', 'book_comments.id_buku')
+            ->where('favorites.user_id', $user->id_user)
+            ->select(
+                'buku.id_buku',
+                'buku.judul_buku',
+                'buku.penulis',
+                'buku.kategori',
+                'buku.cover',
+                'buku.jumlah_tersedia',
+                'buku.tahun_terbit',
+                'buku.deskripsi',
+                'favorites.created_at as favorited_at',
+                DB::raw('COALESCE(AVG(book_comments.rating), 0) as avg_rating'),
+                DB::raw('COUNT(DISTINCT book_comments.id) as total_ratings')
+            )
+            ->groupBy(
+                'buku.id_buku',
+                'buku.judul_buku',
+                'buku.penulis',
+                'buku.kategori',
+                'buku.cover',
+                'buku.jumlah_tersedia',
+                'buku.tahun_terbit',
+                'buku.deskripsi',
+                'favorites.created_at'
+            )
+            ->orderBy('favorites.created_at', 'desc')
+            ->get()
+            ->map(function($book) {
+                $book->avg_rating = round($book->avg_rating, 1);
+                $book->cover_url = $book->cover && $book->cover !== 'default_cover.png'
+                    ? asset('storage/covers/' . $book->cover)
+                    : asset('images/default_cover.png');
+                return $book;
+            });
+
+        return view('dashboard.anggota.favorites', compact('favorites'));
+    }
+
+    /**
+     * Add book to favorites
+     */
+    public function addToFavorites(Request $request)
+    {
+        $user = Auth::user();
+        $userId = $user->id_user;
+        $bookId = $request->book_id;
+
+        // Check if book exists
+        $book = Book::find($bookId);
+        if (!$book) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buku tidak ditemukan'
+            ], 404);
+        }
+
+        // Check if already favorited
+        $existingFavorite = Favorite::where('user_id', $userId)
+            ->where('id_buku', $bookId)
+            ->first();
+
+        if ($existingFavorite) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buku sudah ada di daftar favorit'
+            ], 409);
+        }
+
+        // Add to favorites
+        try {
+            Favorite::create([
+                'user_id' => $userId,
+                'id_buku' => $bookId
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Buku berhasil ditambahkan ke favorit'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan ke favorit'
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove book from favorites
+     */
+    public function removeFromFavorites(Request $request)
+    {
+        $user = Auth::user();
+        $userId = $user->id_user;
+        $bookId = $request->book_id;
+
+        try {
+            $favorite = Favorite::where('user_id', $userId)
+                ->where('id_buku', $bookId)
+                ->first();
+
+            if (!$favorite) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Buku tidak ada di daftar favorit'
+                ], 404);
+            }
+
+            $favorite->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Buku berhasil dihapus dari favorit'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus dari favorit'
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle favorite status
+     */
+    public function toggleFavorite(Request $request)
+    {
+        $user = Auth::user();
+        $userId = $user->id_user;
+        $bookId = $request->book_id;
+
+        // Check if book exists
+        $book = Book::find($bookId);
+        if (!$book) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buku tidak ditemukan'
+            ], 404);
+        }
+
+        try {
+            $favorite = Favorite::where('user_id', $userId)
+                ->where('id_buku', $bookId)
+                ->first();
+
+            if ($favorite) {
+                // Remove from favorites
+                $favorite->delete();
+                return response()->json([
+                    'success' => true,
+                    'action' => 'removed',
+                    'message' => 'Buku dihapus dari favorit',
+                    'is_favorite' => false
+                ]);
+            } else {
+                // Add to favorites
+                Favorite::create([
+                    'user_id' => $userId,
+                    'id_buku' => $bookId
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'action' => 'added',
+                    'message' => 'Buku ditambahkan ke favorit',
+                    'is_favorite' => true
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status favorit'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user's favorite count for dashboard stats
+     */
+    private function getFavoritesCount()
+    {
+        try {
+            $user = Auth::user();
+            return Favorite::where('user_id', $user->id_user)->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Check favorite status for multiple books
+     */
+    public function checkFavoriteStatus(Request $request)
+    {
+        $user = Auth::user();
+        $bookIds = $request->book_ids;
+
+        if (!is_array($bookIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid book IDs format'
+            ], 400);
+        }
+
+        try {
+            $favoriteBookIds = Favorite::where('user_id', $user->id_user)
+                ->whereIn('id_buku', $bookIds)
+                ->pluck('id_buku')
+                ->toArray();
+
+            return response()->json([
+                'success' => true,
+                'favorites' => $favoriteBookIds
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa status favorit'
+            ], 500);
         }
     }
 }

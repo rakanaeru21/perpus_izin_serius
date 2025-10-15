@@ -76,4 +76,29 @@ class User extends Authenticatable
                     ->orWhere('email', $credential)
                     ->first();
     }
+
+    /**
+     * Get the user's favorite books.
+     */
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'user_id', 'id_user');
+    }
+
+    /**
+     * Get the books that this user has favorited.
+     */
+    public function favoriteBooks()
+    {
+        return $this->belongsToMany(Book::class, 'favorites', 'user_id', 'id_buku', 'id_user', 'id_buku')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Check if the user has favorited a specific book.
+     */
+    public function hasFavorited($bookId)
+    {
+        return $this->favorites()->where('id_buku', $bookId)->exists();
+    }
 }

@@ -120,7 +120,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title text-white-50 mb-2">Buku Favorit</h6>
-                            <h2 class="mb-0">0</h2>
+                            <h2 class="mb-0">{{ number_format($favoritesCount) }}</h2>
                         </div>
                         <div class="text-white-50">
                             <i class="bi bi-heart-fill" style="font-size: 2rem;"></i>
@@ -188,9 +188,16 @@
                                         </small>
                                         @endif
                                     </div>
-                                    <button class="btn btn-primary btn-sm mt-2 {{ $buku->jumlah_tersedia == 0 ? 'disabled' : '' }}">
-                                        <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia > 0 ? 'Pinjam' : 'Tidak Tersedia' }}
-                                    </button>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button class="btn btn-primary btn-sm flex-grow-1 {{ $buku->jumlah_tersedia == 0 ? 'disabled' : '' }}">
+                                            <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia > 0 ? 'Pinjam' : 'Tidak Tersedia' }}
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm favorite-btn"
+                                                data-book-id="{{ $buku->id_buku }}"
+                                                title="Tambah ke favorit">
+                                            <i class="bi bi-heart"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -258,9 +265,16 @@
                                         </small>
                                         @endif
                                     </div>
-                                    <button class="btn btn-primary btn-sm mt-2 {{ $buku->jumlah_tersedia == 0 ? 'disabled' : '' }}">
-                                        <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia > 0 ? 'Pinjam' : 'Tidak Tersedia' }}
-                                    </button>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button class="btn btn-primary btn-sm flex-grow-1 {{ $buku->jumlah_tersedia == 0 ? 'disabled' : '' }}">
+                                            <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia > 0 ? 'Pinjam' : 'Tidak Tersedia' }}
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm favorite-btn"
+                                                data-book-id="{{ $buku->id_buku }}"
+                                                title="Tambah ke favorit">
+                                            <i class="bi bi-heart"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -311,6 +325,9 @@
 <script>
     // Notification untuk buku yang akan jatuh tempo
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize favorite buttons
+        initializeFavoriteButtons();
+
         // Simulasi notifikasi reminder
         // setTimeout(function() {
         //     if (confirm('Anda memiliki buku yang akan jatuh tempo dalam 2 hari. Apakah Anda ingin memperpanjang?')) {
@@ -318,6 +335,112 @@
         //     }
         // }, 5000);
     });
+
+    function initializeFavoriteButtons() {
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        // Check favorite status for all books
+        checkFavoriteStatus();
+
+        // Add event listeners to favorite buttons
+        document.querySelectorAll('.favorite-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const bookId = this.dataset.bookId;
+                toggleFavorite(bookId, this);
+            });
+        });
+
+        function checkFavoriteStatus() {
+            // You can implement this to check which books are already favorited
+            // For now, we'll start with empty hearts
+        }
+
+        function toggleFavorite(bookId, button) {
+            // Show loading state
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            button.disabled = true;
+
+            fetch('{{ route("anggota.favorites.toggle") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    book_id: bookId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button appearance
+                    if (data.is_favorite) {
+                        button.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        button.classList.remove('btn-outline-danger');
+                        button.classList.add('btn-danger');
+                        button.title = 'Hapus dari favorit';
+                    } else {
+                        button.innerHTML = '<i class="bi bi-heart"></i>';
+                        button.classList.remove('btn-danger');
+                        button.classList.add('btn-outline-danger');
+                        button.title = 'Tambah ke favorit';
+                    }
+
+                    // Show success message
+                    showNotification(data.message, 'success');
+
+                    // Update favorites count in dashboard
+                    updateFavoritesCount(data.action === 'added' ? 1 : -1);
+                } else {
+                    // Show error message
+                    showNotification(data.message || 'Terjadi kesalahan', 'error');
+                    button.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan saat mengubah favorit', 'error');
+                button.innerHTML = originalContent;
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            // Add to page
+            document.body.appendChild(notification);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        function updateFavoritesCount(change) {
+            const favoritesCountElement = document.querySelector('.stat-card.info h2');
+            if (favoritesCountElement) {
+                const currentCount = parseInt(favoritesCountElement.textContent) || 0;
+                const newCount = Math.max(0, currentCount + change);
+                favoritesCountElement.textContent = newCount;
+            }
+        }
+    }
 </script>
 @endpush
 
