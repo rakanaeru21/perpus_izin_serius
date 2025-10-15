@@ -8,7 +8,7 @@
     <!-- Background Pattern -->
     <div class="absolute inset-0 bg-black opacity-20"></div>
     <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="1.5"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
-    
+
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
         <div class="text-center">
             <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
@@ -18,12 +18,12 @@
             <p class="text-xl md:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto leading-relaxed">
                 Perpustakaan digital modern dengan koleksi lengkap buku, jurnal, dan e-book untuk mendukung perjalanan belajar Anda
             </p>
-            
+
             <!-- Search Bar -->
             <div class="max-w-2xl mx-auto mb-10">
                 <div class="relative">
-                    <input type="text" 
-                           placeholder="Cari buku, jurnal, atau artikel..." 
+                    <input type="text"
+                           placeholder="Cari buku, jurnal, atau artikel..."
                            class="w-full px-6 py-4 text-lg rounded-full border-0 shadow-lg focus:ring-4 focus:ring-white focus:ring-opacity-30 focus:outline-none">
                     <button class="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,7 +286,7 @@
                 <p class="text-lg text-gray-600 mb-8 leading-relaxed">
                     Dengan koleksi lebih dari 1.000 buku fisik, ratusan e-book, dan akses ke jurnal internasional, kami siap mendukung perjalanan belajar dan penelitian Anda.
                 </p>
-                
+
                 <!-- Features -->
                 <div class="space-y-4">
                     <div class="flex items-center">
@@ -309,7 +309,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="relative">
                 <div class="bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl p-8 text-white">
                     <div class="text-center">

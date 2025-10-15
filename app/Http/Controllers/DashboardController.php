@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Book;
+use App\Models\BookComment;
 
 class DashboardController extends Controller
 {
@@ -71,7 +73,10 @@ class DashboardController extends Controller
             'bukuDipinjam' => $this->getBukuDipinjamUser(),
             'riwayatPinjaman' => $this->getRiwayatPinjaman(),
             'keterlambatan' => $this->getKeterlambatanUser(),
-            'rekomendasiBuku' => $this->getRekomendasiBuku()
+            'rekomendasiBuku' => $this->getRekomendasiBuku(),
+            'bukuTerpopuler' => $this->getBukuTerpopuler(),
+            'bukuByKategori' => $this->getBukuByKategori(),
+            'kategoriBuku' => $this->getKategoriBuku()
         ];
 
         return view('dashboard.anggota.index', $data);
@@ -465,6 +470,234 @@ class DashboardController extends Controller
                     'tanggal_kembali' => '2025-10-01',
                     'status' => 'dikembalikan'
                 ]
+            ]);
+        }
+    }
+
+    /**
+     * Get buku terpopuler berdasarkan rating tertinggi
+     */
+    private function getBukuTerpopuler($limit = 8)
+    {
+        try {
+            return DB::table('buku')
+                ->leftJoin('book_comments', 'buku.id_buku', '=', 'book_comments.id_buku')
+                ->select(
+                    'buku.id_buku',
+                    'buku.judul_buku',
+                    'buku.penulis',
+                    'buku.kategori',
+                    'buku.cover',
+                    'buku.jumlah_tersedia',
+                    'buku.tahun_terbit',
+                    DB::raw('COALESCE(AVG(book_comments.rating), 0) as avg_rating'),
+                    DB::raw('COUNT(book_comments.rating) as total_ratings')
+                )
+                ->groupBy(
+                    'buku.id_buku',
+                    'buku.judul_buku',
+                    'buku.penulis',
+                    'buku.kategori',
+                    'buku.cover',
+                    'buku.jumlah_tersedia',
+                    'buku.tahun_terbit'
+                )
+                ->orderBy('avg_rating', 'desc')
+                ->orderBy('total_ratings', 'desc')
+                ->limit($limit)
+                ->get()
+                ->map(function($book) {
+                    $book->avg_rating = round($book->avg_rating, 1);
+                    $book->cover_url = $book->cover && $book->cover !== 'default_cover.png'
+                        ? asset('storage/covers/' . $book->cover)
+                        : asset('images/default_cover.png');
+                    return $book;
+                });
+        } catch (\Exception $e) {
+            // Return sample data if database is not ready
+            return collect([
+                (object)[
+                    'id_buku' => 1,
+                    'judul_buku' => 'Laravel: Up & Running',
+                    'penulis' => 'Matt Stauffer',
+                    'kategori' => 'Teknologi',
+                    'cover' => 'default_cover.png',
+                    'jumlah_tersedia' => 5,
+                    'tahun_terbit' => 2021,
+                    'avg_rating' => 4.8,
+                    'total_ratings' => 15,
+                    'cover_url' => asset('images/default_cover.png')
+                ],
+                (object)[
+                    'id_buku' => 2,
+                    'judul_buku' => 'Clean Code',
+                    'penulis' => 'Robert C. Martin',
+                    'kategori' => 'Teknologi',
+                    'cover' => 'default_cover.png',
+                    'jumlah_tersedia' => 3,
+                    'tahun_terbit' => 2008,
+                    'avg_rating' => 4.7,
+                    'total_ratings' => 22,
+                    'cover_url' => asset('images/default_cover.png')
+                ],
+                (object)[
+                    'id_buku' => 3,
+                    'judul_buku' => 'The Psychology of Computer Programming',
+                    'penulis' => 'Gerald M. Weinberg',
+                    'kategori' => 'Psikologi',
+                    'cover' => 'default_cover.png',
+                    'jumlah_tersedia' => 2,
+                    'tahun_terbit' => 1998,
+                    'avg_rating' => 4.6,
+                    'total_ratings' => 8,
+                    'cover_url' => asset('images/default_cover.png')
+                ],
+                (object)[
+                    'id_buku' => 4,
+                    'judul_buku' => 'Sapiens: A Brief History of Humankind',
+                    'penulis' => 'Yuval Noah Harari',
+                    'kategori' => 'Sejarah',
+                    'cover' => 'default_cover.png',
+                    'jumlah_tersedia' => 4,
+                    'tahun_terbit' => 2011,
+                    'avg_rating' => 4.5,
+                    'total_ratings' => 30,
+                    'cover_url' => asset('images/default_cover.png')
+                ]
+            ]);
+        }
+    }
+
+    /**
+     * Get buku berdasarkan kategori
+     */
+    private function getBukuByKategori()
+    {
+        try {
+            $categories = $this->getKategoriBuku();
+            $result = [];
+
+            foreach ($categories as $category) {
+                $books = DB::table('buku')
+                    ->leftJoin('book_comments', 'buku.id_buku', '=', 'book_comments.id_buku')
+                    ->select(
+                        'buku.id_buku',
+                        'buku.judul_buku',
+                        'buku.penulis',
+                        'buku.kategori',
+                        'buku.cover',
+                        'buku.jumlah_tersedia',
+                        'buku.tahun_terbit',
+                        DB::raw('COALESCE(AVG(book_comments.rating), 0) as avg_rating'),
+                        DB::raw('COUNT(book_comments.rating) as total_ratings')
+                    )
+                    ->where('buku.kategori', $category->kategori)
+                    ->groupBy(
+                        'buku.id_buku',
+                        'buku.judul_buku',
+                        'buku.penulis',
+                        'buku.kategori',
+                        'buku.cover',
+                        'buku.jumlah_tersedia',
+                        'buku.tahun_terbit'
+                    )
+                    ->orderBy('avg_rating', 'desc')
+                    ->limit(4)
+                    ->get()
+                    ->map(function($book) {
+                        $book->avg_rating = round($book->avg_rating, 1);
+                        $book->cover_url = $book->cover && $book->cover !== 'default_cover.png'
+                            ? asset('storage/covers/' . $book->cover)
+                            : asset('images/default_cover.png');
+                        return $book;
+                    });
+
+                if ($books->count() > 0) {
+                    $result[$category->kategori] = $books;
+                }
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            // Return sample data if database is not ready
+            return [
+                'Teknologi' => collect([
+                    (object)[
+                        'id_buku' => 1,
+                        'judul_buku' => 'Laravel Framework',
+                        'penulis' => 'Taylor Otwell',
+                        'kategori' => 'Teknologi',
+                        'cover' => 'default_cover.png',
+                        'jumlah_tersedia' => 3,
+                        'tahun_terbit' => 2023,
+                        'avg_rating' => 4.9,
+                        'total_ratings' => 12,
+                        'cover_url' => asset('images/default_cover.png')
+                    ],
+                    (object)[
+                        'id_buku' => 2,
+                        'judul_buku' => 'PHP: The Right Way',
+                        'penulis' => 'Josh Lockhart',
+                        'kategori' => 'Teknologi',
+                        'cover' => 'default_cover.png',
+                        'jumlah_tersedia' => 5,
+                        'tahun_terbit' => 2022,
+                        'avg_rating' => 4.7,
+                        'total_ratings' => 18,
+                        'cover_url' => asset('images/default_cover.png')
+                    ]
+                ]),
+                'Fiksi' => collect([
+                    (object)[
+                        'id_buku' => 3,
+                        'judul_buku' => 'The Great Gatsby',
+                        'penulis' => 'F. Scott Fitzgerald',
+                        'kategori' => 'Fiksi',
+                        'cover' => 'default_cover.png',
+                        'jumlah_tersedia' => 2,
+                        'tahun_terbit' => 1925,
+                        'avg_rating' => 4.3,
+                        'total_ratings' => 25,
+                        'cover_url' => asset('images/default_cover.png')
+                    ],
+                    (object)[
+                        'id_buku' => 4,
+                        'judul_buku' => '1984',
+                        'penulis' => 'George Orwell',
+                        'kategori' => 'Fiksi',
+                        'cover' => 'default_cover.png',
+                        'jumlah_tersedia' => 4,
+                        'tahun_terbit' => 1949,
+                        'avg_rating' => 4.6,
+                        'total_ratings' => 32,
+                        'cover_url' => asset('images/default_cover.png')
+                    ]
+                ])
+            ];
+        }
+    }
+
+    /**
+     * Get semua kategori buku yang tersedia
+     */
+    private function getKategoriBuku()
+    {
+        try {
+            return DB::table('buku')
+                ->select('kategori', DB::raw('COUNT(*) as total_buku'))
+                ->whereNotNull('kategori')
+                ->where('kategori', '!=', '')
+                ->groupBy('kategori')
+                ->orderBy('total_buku', 'desc')
+                ->get();
+        } catch (\Exception $e) {
+            // Return sample data if database is not ready
+            return collect([
+                (object)['kategori' => 'Teknologi', 'total_buku' => 25],
+                (object)['kategori' => 'Fiksi', 'total_buku' => 18],
+                (object)['kategori' => 'Sejarah', 'total_buku' => 15],
+                (object)['kategori' => 'Sains', 'total_buku' => 12],
+                (object)['kategori' => 'Psikologi', 'total_buku' => 8]
             ]);
         }
     }

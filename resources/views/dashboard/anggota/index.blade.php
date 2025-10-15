@@ -131,7 +131,148 @@
         </div>
     </div>
 
-    < class="row">
+
+    <!-- Buku Terpopuler -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-star-fill text-warning me-2"></i>
+                        Buku Terpopuler
+                    </h5>
+                    <a href="{{ route('anggota.catalog') }}" class="btn btn-outline-primary btn-sm">
+                        Lihat Semua
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach($bukuTerpopuler as $buku)
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                            <div class="card h-100 shadow-sm book-card">
+                                <div class="position-relative">
+                                    <img src="{{ $buku->cover_url }}"
+                                         class="card-img-top book-cover"
+                                         alt="{{ $buku->judul_buku }}"
+                                         style="height: 200px; object-fit: cover;">
+                                    @if($buku->avg_rating > 0)
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-star-fill"></i> {{ $buku->avg_rating }}
+                                        </span>
+                                    </div>
+                                    @endif
+                                    @if($buku->jumlah_tersedia == 0)
+                                    <div class="position-absolute top-0 start-0 m-2">
+                                        <span class="badge bg-danger">Tidak Tersedia</span>
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title text-truncate" title="{{ $buku->judul_buku }}">
+                                        {{ $buku->judul_buku }}
+                                    </h6>
+                                    <p class="card-text text-muted small mb-1">
+                                        <i class="bi bi-person"></i> {{ $buku->penulis }}
+                                    </p>
+                                    <p class="card-text text-muted small mb-2">
+                                        <i class="bi bi-tag"></i> {{ $buku->kategori }} • {{ $buku->tahun_terbit }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <small class="text-muted">
+                                            <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia }} tersedia
+                                        </small>
+                                        @if($buku->total_ratings > 0)
+                                        <small class="text-muted">
+                                            {{ $buku->total_ratings }} rating
+                                        </small>
+                                        @endif
+                                    </div>
+                                    <button class="btn btn-primary btn-sm mt-2 {{ $buku->jumlah_tersedia == 0 ? 'disabled' : '' }}">
+                                        <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia > 0 ? 'Pinjam' : 'Tidak Tersedia' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buku Berdasarkan Kategori -->
+    @foreach($bukuByKategori as $kategori => $books)
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-bookmark me-2"></i>
+                        Kategori: {{ $kategori }}
+                    </h5>
+                    <a href="{{ route('anggota.catalog') }}?kategori={{ urlencode($kategori) }}" class="btn btn-outline-primary btn-sm">
+                        Lihat Semua
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach($books as $buku)
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                            <div class="card h-100 shadow-sm book-card">
+                                <div class="position-relative">
+                                    <img src="{{ $buku->cover_url }}"
+                                         class="card-img-top book-cover"
+                                         alt="{{ $buku->judul_buku }}"
+                                         style="height: 180px; object-fit: cover;">
+                                    @if($buku->avg_rating > 0)
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-star-fill"></i> {{ $buku->avg_rating }}
+                                        </span>
+                                    </div>
+                                    @endif
+                                    @if($buku->jumlah_tersedia == 0)
+                                    <div class="position-absolute top-0 start-0 m-2">
+                                        <span class="badge bg-danger">Tidak Tersedia</span>
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title text-truncate" title="{{ $buku->judul_buku }}">
+                                        {{ $buku->judul_buku }}
+                                    </h6>
+                                    <p class="card-text text-muted small mb-1">
+                                        <i class="bi bi-person"></i> {{ $buku->penulis }}
+                                    </p>
+                                    <p class="card-text text-muted small mb-2">
+                                        <i class="bi bi-calendar"></i> {{ $buku->tahun_terbit }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <small class="text-muted">
+                                            <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia }} tersedia
+                                        </small>
+                                        @if($buku->total_ratings > 0)
+                                        <small class="text-muted">
+                                            {{ $buku->total_ratings }} rating
+                                        </small>
+                                        @endif
+                                    </div>
+                                    <button class="btn btn-primary btn-sm mt-2 {{ $buku->jumlah_tersedia == 0 ? 'disabled' : '' }}">
+                                        <i class="bi bi-book"></i> {{ $buku->jumlah_tersedia > 0 ? 'Pinjam' : 'Tidak Tersedia' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
+    <div class="row">
         <!-- Buku Sedang Dipinjam -->
         <div class="col-lg-8 mb-4">
             <div class="card">
@@ -162,47 +303,7 @@
 
 
 
-    <!-- Rekomendasi Buku -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-stars text-primary me-2"></i>
-                        Rekomendasi Buku Untuk Anda
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @foreach($rekomendasiBuku as $buku)
-                        <div class="col-lg-4 col-md-6 mb-3">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-start">
-                                        <div class="bg-gradient text-white rounded me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                            <i class="bi bi-book" style="font-size: 1.5rem;"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="card-title mb-2">{{ $buku['judul'] }}</h6>
-                                            <p class="card-text small text-muted mb-2">{{ $buku['penulis'] }}</p>
-                                            <span class="badge bg-light text-dark">{{ $buku['kategori'] }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <button class="btn btn-sm btn-primary w-100">
-                                            <i class="bi bi-plus-circle me-1"></i>
-                                            Pinjam Buku
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
 @endsection
 
@@ -218,4 +319,99 @@
         // }, 5000);
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+    .book-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: none;
+        border-radius: 10px;
+    }
+
+    .book-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .book-cover {
+        border-radius: 10px 10px 0 0;
+        transition: transform 0.3s ease;
+    }
+
+    .book-card:hover .book-cover {
+        transform: scale(1.02);
+    }
+
+    .card-title {
+        font-weight: 600;
+        color: #2c3e50;
+        line-height: 1.3;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        border-radius: 20px;
+    }
+
+    .btn-primary {
+        border-radius: 20px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    }
+
+    .stat-card.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 15px;
+    }
+
+    .stat-card.success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        color: white;
+        border: none;
+        border-radius: 15px;
+    }
+
+    .stat-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border: none;
+        border-radius: 15px;
+    }
+
+    .stat-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border: none;
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.125);
+        background: linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%) !important;
+    }
+
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    @media (max-width: 768px) {
+        .book-card {
+            margin-bottom: 1rem;
+        }
+
+        .col-sm-6 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
 @endpush

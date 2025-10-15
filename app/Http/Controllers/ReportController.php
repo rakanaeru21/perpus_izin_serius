@@ -115,22 +115,41 @@ class ReportController extends Controller
     public function getCategoryStats()
     {
         try {
-            $stats = DB::table('buku')
-                ->select('kategori', DB::raw('COUNT(*) as total'))
-                ->groupBy('kategori')
+            // Get category stats based on borrowing frequency
+            $stats = DB::table('peminjaman')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->select('buku.kategori', DB::raw('COUNT(*) as total'))
+                ->whereNotNull('buku.kategori')
+                ->where('buku.kategori', '!=', '')
+                ->groupBy('buku.kategori')
                 ->orderBy('total', 'desc')
-                ->limit(10)
+                ->limit(8)
                 ->get();
+
+            // If no borrowing data, get from book collection
+            if ($stats->isEmpty()) {
+                $stats = DB::table('buku')
+                    ->select('kategori', DB::raw('COUNT(*) as total'))
+                    ->whereNotNull('kategori')
+                    ->where('kategori', '!=', '')
+                    ->groupBy('kategori')
+                    ->orderBy('total', 'desc')
+                    ->limit(8)
+                    ->get();
+            }
 
             return response()->json($stats);
         } catch (\Exception $e) {
-            // Return sample data if table doesn't exist
+            // Return sample data if tables don't exist
             return response()->json([
                 ['kategori' => 'Fiksi', 'total' => 45],
                 ['kategori' => 'Non-Fiksi', 'total' => 32],
                 ['kategori' => 'Teknologi', 'total' => 28],
                 ['kategori' => 'Sejarah', 'total' => 25],
-                ['kategori' => 'Sains', 'total' => 22]
+                ['kategori' => 'Sains', 'total' => 22],
+                ['kategori' => 'Novel', 'total' => 18],
+                ['kategori' => 'Pendidikan', 'total' => 15],
+                ['kategori' => 'Agama', 'total' => 12]
             ]);
         }
     }
@@ -142,17 +161,38 @@ class ReportController extends Controller
     {
         try {
             $borrowings = DB::table('peminjaman')
-                ->whereDate('tanggal_pinjam', $date)
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereDate('peminjaman.tanggal_pinjam', $date)
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $returns = DB::table('peminjaman')
-                ->whereDate('tanggal_kembali', $date)
-                ->where('status', 'dikembalikan')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereDate('peminjaman.tanggal_kembali', $date)
+                ->where('peminjaman.status', 'dikembalikan')
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $overdue = DB::table('peminjaman')
-                ->whereDate('batas_kembali', '<=', $date)
-                ->where('status', '!=', 'dikembalikan')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereDate('peminjaman.batas_kembali', '<=', $date)
+                ->whereIn('peminjaman.status', ['dipinjam', 'terlambat'])
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             return [
@@ -176,18 +216,34 @@ class ReportController extends Controller
     {
         try {
             $borrowings = DB::table('peminjaman')
-                ->whereBetween('tanggal_pinjam', [$weekStart, $weekEnd])
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_pinjam', [$weekStart, $weekEnd])
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $returns = DB::table('peminjaman')
-                ->whereBetween('tanggal_kembali', [$weekStart, $weekEnd])
-                ->where('status', 'dikembalikan')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_kembali', [$weekStart, $weekEnd])
+                ->where('peminjaman.status', 'dikembalikan')
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             return [
                 'period' => $weekStart . ' - ' . $weekEnd,
                 'total_borrowings' => $borrowings->count(),
                 'total_returns' => $returns->count(),
+                'borrowings' => $borrowings,
+                'returns' => $returns,
                 'daily_breakdown' => $this->getDailyBreakdown($weekStart, $weekEnd)
             ];
         } catch (\Exception $e) {
@@ -202,19 +258,38 @@ class ReportController extends Controller
     {
         try {
             $borrowings = DB::table('peminjaman')
-                ->whereBetween('tanggal_pinjam', [$monthStart, $monthEnd])
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_pinjam', [$monthStart, $monthEnd])
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $returns = DB::table('peminjaman')
-                ->whereBetween('tanggal_kembali', [$monthStart, $monthEnd])
-                ->where('status', 'dikembalikan')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_kembali', [$monthStart, $monthEnd])
+                ->where('peminjaman.status', 'dikembalikan')
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $popular_books = DB::table('peminjaman')
                 ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
                 ->whereBetween('peminjaman.tanggal_pinjam', [$monthStart, $monthEnd])
-                ->select('buku.judul_buku', DB::raw('COUNT(*) as total_borrowed'))
-                ->groupBy('buku.id_buku', 'buku.judul_buku')
+                ->select(
+                    'buku.judul_buku',
+                    'buku.penulis',
+                    'buku.kategori',
+                    DB::raw('COUNT(*) as total_borrowed')
+                )
+                ->groupBy('buku.id_buku', 'buku.judul_buku', 'buku.penulis', 'buku.kategori')
                 ->orderBy('total_borrowed', 'desc')
                 ->limit(10)
                 ->get();
@@ -223,6 +298,8 @@ class ReportController extends Controller
                 'period' => Carbon::parse($monthStart)->format('F Y'),
                 'total_borrowings' => $borrowings->count(),
                 'total_returns' => $returns->count(),
+                'borrowings' => $borrowings,
+                'returns' => $returns,
                 'popular_books' => $popular_books,
                 'weekly_breakdown' => $this->getWeeklyBreakdown($monthStart, $monthEnd)
             ];
@@ -238,21 +315,36 @@ class ReportController extends Controller
     {
         try {
             $borrowings = DB::table('peminjaman')
-                ->whereBetween('tanggal_pinjam', [$yearStart, $yearEnd])
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_pinjam', [$yearStart, $yearEnd])
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $returns = DB::table('peminjaman')
-                ->whereBetween('tanggal_kembali', [$yearStart, $yearEnd])
-                ->where('status', 'dikembalikan')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_kembali', [$yearStart, $yearEnd])
+                ->where('peminjaman.status', 'dikembalikan')
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku'
+                )
                 ->get();
 
             $monthly_breakdown = DB::table('peminjaman')
                 ->whereBetween('tanggal_pinjam', [$yearStart, $yearEnd])
                 ->select(
                     DB::raw('MONTH(tanggal_pinjam) as month'),
+                    DB::raw('MONTHNAME(tanggal_pinjam) as month_name'),
                     DB::raw('COUNT(*) as total')
                 )
-                ->groupBy(DB::raw('MONTH(tanggal_pinjam)'))
+                ->groupBy(DB::raw('MONTH(tanggal_pinjam)'), DB::raw('MONTHNAME(tanggal_pinjam)'))
                 ->orderBy('month')
                 ->get();
 
@@ -260,6 +352,8 @@ class ReportController extends Controller
                 'period' => Carbon::parse($yearStart)->year,
                 'total_borrowings' => $borrowings->count(),
                 'total_returns' => $returns->count(),
+                'borrowings' => $borrowings,
+                'returns' => $returns,
                 'monthly_breakdown' => $monthly_breakdown
             ];
         } catch (\Exception $e) {
@@ -295,7 +389,7 @@ class ReportController extends Controller
      */
     private function getWeeklyBorrowingStats()
     {
-        $startDate = Carbon::now()->subDays(7);
+        $startDate = Carbon::now()->subDays(6);
         $data = [];
 
         for ($i = 0; $i < 7; $i++) {
@@ -310,7 +404,7 @@ class ReportController extends Controller
 
             $data[] = [
                 'date' => $date->format('Y-m-d'),
-                'day' => $date->format('l'),
+                'day' => $date->format('D'),
                 'count' => $count
             ];
         }
@@ -325,7 +419,7 @@ class ReportController extends Controller
     {
         $data = [];
 
-        for ($i = 0; $i < 12; $i++) {
+        for ($i = 11; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             try {
                 $count = DB::table('peminjaman')
@@ -337,12 +431,12 @@ class ReportController extends Controller
             }
 
             $data[] = [
-                'month' => $month->format('F Y'),
+                'month' => $month->format('M Y'),
                 'count' => $count
             ];
         }
 
-        return array_reverse($data);
+        return $data;
     }
 
     /**

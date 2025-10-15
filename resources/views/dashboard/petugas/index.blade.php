@@ -369,14 +369,14 @@
                                             </button>
                                             @if($peminjaman->status === 'terlambat')
                                                 <button class="btn btn-sm btn-outline-warning ms-1"
-                                                        onclick="remindUser({{ $peminjaman->id_peminjaman }})"
+                                                        onclick=""
                                                         title="Kirim Pengingat">
                                                     <i class="bi bi-envelope"></i> Ingatkan
                                                 </button>
                                             @endif
                                         @elseif($peminjaman->status === 'dikembalikan')
                                             <button class="btn btn-sm btn-outline-info"
-                                                    onclick="viewDetail({{ $peminjaman->id_peminjaman }})"
+                                                    onclick=""
                                                     title="Lihat Detail">
                                                 <i class="bi bi-eye"></i> Detail
                                             </button>

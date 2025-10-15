@@ -235,12 +235,7 @@
                                                             </button>
                                                         </li>
                                                         @if($loan->status == 'dikembalikan')
-                                                            <li>
-                                                                <button class="dropdown-item" onclick="printReceipt({{ $loan->id_peminjaman }})">
-                                                                    <i class="bi bi-printer me-2"></i>
-                                                                    Cetak Kwitansi
-                                                                </button>
-                                                            </li>
+                                                            
                                                         @endif
                                                         @if($loan->keterangan)
                                                             <li>

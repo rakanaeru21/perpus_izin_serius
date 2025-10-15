@@ -5,6 +5,51 @@
 @section('user-name', 'Administrator')
 @section('user-role', 'Admin')
 
+@section('sidebar-menu')
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('dashboard.admin') }}">
+            <i class="bi bi-speedometer2 me-2"></i>
+            Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.books') }}">
+            <i class="bi bi-book me-2"></i>
+            Manajemen Buku
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.members') }}">
+            <i class="bi bi-people me-2"></i>
+            Manajemen Anggota
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-person-badge me-2"></i>
+            Manajemen Petugas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-arrow-left-right me-2"></i>
+            Transaksi Pinjaman
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{{ route('admin.reports') }}">
+            <i class="bi bi-bar-chart me-2"></i>
+            Laporan
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="bi bi-gear me-2"></i>
+            Pengaturan Sistem
+        </a>
+    </li>
+@endsection
+
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
@@ -37,7 +82,7 @@
                                 <h6>Laporan Mingguan</h6>
                                 <input type="week" class="form-control form-control-sm mb-2" id="weeklyDate" value="{{ date('Y-\WW') }}">
                                 <button class="btn btn-outline-success btn-sm me-1" onclick="generateReport('weekly', 'view')">Preview</button>
-                                <button class="btn btn-success btn-sm" onclick="generateReport('weekly', 'pdf')">
+                                <button class="btn btn-success btn-sm" onclick="">
                                     <i class="bi bi-file-pdf"></i> PDF
                                 </button>
                             </div>
@@ -50,7 +95,7 @@
                                 <h6>Laporan Bulanan</h6>
                                 <input type="month" class="form-control form-control-sm mb-2" id="monthlyDate" value="{{ date('Y-m') }}">
                                 <button class="btn btn-outline-warning btn-sm me-1" onclick="generateReport('monthly', 'view')">Preview</button>
-                                <button class="btn btn-warning btn-sm" onclick="generateReport('monthly', 'pdf')">
+                                <button class="btn btn-warning btn-sm" onclick="">
                                     <i class="bi bi-file-pdf"></i> PDF
                                 </button>
                             </div>
@@ -67,7 +112,7 @@
                                     @endfor
                                 </select>
                                 <button class="btn btn-outline-info btn-sm me-1" onclick="generateReport('yearly', 'view')">Preview</button>
-                                <button class="btn btn-info btn-sm" onclick="generateReport('yearly', 'pdf')">
+                                <button class="btn btn-info btn-sm" onclick="">
                                     <i class="bi bi-file-pdf"></i> PDF
                                 </button>
                             </div>
@@ -245,7 +290,7 @@ function showReportPreview(type, data) {
     // Generate preview content based on type
     let html = `
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">
                         <h4>${data.total_borrowings || 0}</h4>
@@ -253,7 +298,7 @@ function showReportPreview(type, data) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
                         <h4>${data.total_returns || 0}</h4>
@@ -261,18 +306,44 @@ function showReportPreview(type, data) {
                     </div>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h4>${data.total_overdue || 0}</h4>
+                        <small>Keterlambatan</small>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 
+    // Add period information
+    if (data.period) {
+        html += `
+            <div class="alert alert-info">
+                <strong>Periode:</strong> ${data.period}
+            </div>
+        `;
+    } else if (data.date) {
+        html += `
+            <div class="alert alert-info">
+                <strong>Tanggal:</strong> ${new Date(data.date).toLocaleDateString('id-ID')}
+            </div>
+        `;
+    }
+
+    // Show popular books for monthly reports
     if (type === 'monthly' && data.popular_books && data.popular_books.length > 0) {
         html += `
-            <h6>Buku Paling Populer:</h6>
+            <h6 class="mt-4">📚 Buku Paling Populer:</h6>
             <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
+                <table class="table table-sm table-striped">
+                    <thead class="table-dark">
                         <tr>
                             <th>Rank</th>
                             <th>Judul Buku</th>
+                            <th>Penulis</th>
+                            <th>Kategori</th>
                             <th>Total Dipinjam</th>
                         </tr>
                     </thead>
@@ -280,12 +351,15 @@ function showReportPreview(type, data) {
         `;
 
         data.popular_books.slice(0, 5).forEach((book, index) => {
-            const emoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+            const medals = ['🥇', '🥈', '🥉'];
+            const rank = index < 3 ? medals[index] : `${index + 1}.`;
             html += `
                 <tr>
-                    <td>${emoji}</td>
-                    <td>${book.judul_buku || book.title}</td>
-                    <td>${book.total_borrowed || book.count}</td>
+                    <td>${rank}</td>
+                    <td><strong>${book.judul_buku || book.title || 'N/A'}</strong></td>
+                    <td>${book.penulis || 'N/A'}</td>
+                    <td><span class="badge bg-secondary">${book.kategori || 'N/A'}</span></td>
+                    <td><span class="badge bg-primary">${book.total_borrowed || book.count || 0}</span></td>
                 </tr>
             `;
         });
@@ -293,6 +367,81 @@ function showReportPreview(type, data) {
         html += `
                     </tbody>
                 </table>
+            </div>
+        `;
+    }
+
+    // Show recent transactions for daily reports
+    if (type === 'daily' && data.borrowings && data.borrowings.length > 0) {
+        html += `
+            <h6 class="mt-4">📋 Peminjaman Hari Ini (${data.borrowings.length} transaksi):</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>No</th>
+                            <th>Peminjam</th>
+                            <th>Judul Buku</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        data.borrowings.slice(0, 5).forEach((borrowing, index) => {
+            const statusColor = borrowing.status === 'dipinjam' ? 'primary' :
+                               borrowing.status === 'dikembalikan' ? 'success' : 'warning';
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${borrowing.nama_peminjam || 'N/A'}</td>
+                    <td>${borrowing.judul_buku || 'N/A'}</td>
+                    <td><span class="badge bg-${statusColor}">${borrowing.status}</span></td>
+                </tr>
+            `;
+        });
+
+        if (data.borrowings.length > 5) {
+            html += `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        ... dan ${data.borrowings.length - 5} transaksi lainnya
+                    </td>
+                </tr>
+            `;
+        }
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // Summary for the period
+    if (type !== 'daily') {
+        const efficiency = data.total_borrowings > 0 ?
+            ((data.total_returns / data.total_borrowings) * 100).toFixed(1) : 0;
+
+        html += `
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6>📊 Ringkasan Kinerja:</h6>
+                            <ul class="mb-0">
+                                <li>Tingkat Pengembalian: <strong>${efficiency}%</strong></li>
+                                <li>Rata-rata Peminjaman per ${type === 'weekly' ? 'hari' : type === 'monthly' ? 'minggu' : 'bulan'}:
+                                    <strong>${Math.round(data.total_borrowings / (type === 'weekly' ? 7 : type === 'monthly' ? 4 : 12))}</strong>
+                                </li>
+                                ${data.total_overdue > 0 ?
+                                    `<li class="text-warning">⚠️ Perhatian: ${data.total_overdue} peminjaman terlambat</li>` :
+                                    '<li class="text-success">✅ Tidak ada keterlambatan</li>'
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -319,7 +468,12 @@ function initializeBorrowingChart() {
                 data: [],
                 borderColor: 'rgb(75, 192, 192)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.1
+                tension: 0.1,
+                fill: true,
+                pointBackgroundColor: 'rgb(75, 192, 192)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
             }]
         },
         options: {
@@ -327,8 +481,36 @@ function initializeBorrowingChart() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
                 }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgb(75, 192, 192)',
+                    borderWidth: 1
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
             }
         }
     });
@@ -344,8 +526,17 @@ function initializeCategoryChart() {
     fetch('/dashboard/admin/reports/stats/category')
         .then(response => response.json())
         .then(data => {
-            const labels = data.map(item => item.kategori);
-            const values = data.map(item => item.total);
+            if (!data || data.length === 0) {
+                // Show message if no data
+                ctx.fillStyle = '#666';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Tidak ada data kategori', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            const labels = data.map(item => item.kategori || 'Tidak Berkategori');
+            const values = data.map(item => parseInt(item.total) || 0);
 
             categoryChart = new Chart(ctx, {
                 type: 'doughnut',
@@ -359,8 +550,12 @@ function initializeCategoryChart() {
                             '#FFCE56',
                             '#4BC0C0',
                             '#9966FF',
-                            '#FF9F40'
-                        ]
+                            '#FF9F40',
+                            '#FF6384',
+                            '#36A2EB'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
                     }]
                 },
                 options: {
@@ -368,7 +563,22 @@ function initializeCategoryChart() {
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
                         }
                     }
                 }
@@ -376,6 +586,11 @@ function initializeCategoryChart() {
         })
         .catch(error => {
             console.error('Error loading category data:', error);
+            // Show error message
+            ctx.fillStyle = '#dc3545';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Error loading data', ctx.canvas.width / 2, ctx.canvas.height / 2);
         });
 }
 
@@ -383,25 +598,48 @@ function updateBorrowingChart(period) {
     fetch(`/dashboard/admin/reports/stats/borrowing?period=${period}`)
         .then(response => response.json())
         .then(data => {
+            if (!data || data.length === 0) {
+                // Clear chart if no data
+                borrowingChart.data.labels = [];
+                borrowingChart.data.datasets[0].data = [];
+                borrowingChart.update();
+                return;
+            }
+
             let labels, values;
 
             if (period === 'week') {
-                labels = data.map(item => item.day);
-                values = data.map(item => item.count);
+                labels = data.map(item => item.day || item.date);
+                values = data.map(item => parseInt(item.count) || 0);
             } else if (period === 'month') {
                 labels = data.map(item => item.month);
-                values = data.map(item => item.count);
+                values = data.map(item => parseInt(item.count) || 0);
             } else {
-                labels = data.map(item => item.year.toString());
-                values = data.map(item => item.count);
+                labels = data.map(item => item.year ? item.year.toString() : item.year);
+                values = data.map(item => parseInt(item.count) || 0);
+            }
+
+            // Update chart label based on period
+            let chartLabel = 'Peminjaman';
+            if (period === 'week') {
+                chartLabel = 'Peminjaman (7 Hari Terakhir)';
+            } else if (period === 'month') {
+                chartLabel = 'Peminjaman (12 Bulan Terakhir)';
+            } else if (period === 'year') {
+                chartLabel = 'Peminjaman (5 Tahun Terakhir)';
             }
 
             borrowingChart.data.labels = labels;
             borrowingChart.data.datasets[0].data = values;
+            borrowingChart.data.datasets[0].label = chartLabel;
             borrowingChart.update();
         })
         .catch(error => {
             console.error('Error updating borrowing chart:', error);
+            // Show error in chart
+            borrowingChart.data.labels = ['Error'];
+            borrowingChart.data.datasets[0].data = [0];
+            borrowingChart.update();
         });
 }
 
