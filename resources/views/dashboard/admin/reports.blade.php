@@ -95,7 +95,7 @@
                                 <h6>Laporan Bulanan</h6>
                                 <input type="month" class="form-control form-control-sm mb-2" id="monthlyDate" value="{{ date('Y-m') }}">
                                 <button class="btn btn-outline-warning btn-sm me-1" onclick="generateReport('monthly', 'view')">Preview</button>
-                                <button class="btn btn-warning btn-sm" onclick="generateReport('monthly', 'pdf')">
+                                <button class="btn btn-warning btn-sm" onclick="">
                                     <i class="bi bi-file-pdf"></i> PDF
                                 </button>
                             </div>

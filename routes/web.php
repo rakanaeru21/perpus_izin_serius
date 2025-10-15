@@ -85,6 +85,16 @@ Route::prefix('dashboard/petugas')->middleware(['auth', 'role:petugas'])->group(
     Route::post('/return/process', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'processReturn'])->name('petugas.return.process');
     Route::get('/return/today', [App\Http\Controllers\Dashboard\Petugas\ReturnController::class, 'getTodayReturns'])->name('petugas.return.today');
 
+    // Extension routes
+    Route::get('/extensions', [App\Http\Controllers\Dashboard\Petugas\ExtensionController::class, 'index'])->name('petugas.extensions');
+    Route::post('/extensions/{id}/approve', [App\Http\Controllers\Dashboard\Petugas\ExtensionController::class, 'approve'])->name('petugas.extensions.approve');
+    Route::post('/extensions/{id}/reject', [App\Http\Controllers\Dashboard\Petugas\ExtensionController::class, 'reject'])->name('petugas.extensions.reject');
+    Route::get('/extensions/{id}', [App\Http\Controllers\Dashboard\Petugas\ExtensionController::class, 'show'])->name('petugas.extensions.show');
+
+    // Catalog and reports
+    Route::get('/catalog', function () { return view('dashboard.petugas.catalog'); })->name('petugas.catalog');
+    Route::get('/reports', function () { return view('dashboard.petugas.reports'); })->name('petugas.reports');
+
     // Member data routes
     Route::get('/anggota', [DashboardController::class, 'petugasAnggota'])->name('petugas.anggota');
 });

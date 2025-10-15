@@ -149,13 +149,34 @@
                                             @else
                                                 <span class="badge bg-primary">Dipinjam</span>
                                             @endif
+
+                                            @if($borrowing->extension_status !== 'none')
+                                                <br><small class="badge bg-{{ $borrowing->extension_status_color }} mt-1">
+                                                    {{ $borrowing->formatted_extension_status }}
+                                                </small>
+                                            @endif
                                         </td>
                                         <td>
-                                            @if($borrowing->status !== 'terlambat')
+                                            @if($borrowing->canRequestExtension())
                                                 <button class="btn btn-sm btn-outline-success extend-loan"
                                                         data-id="{{ $borrowing->id_peminjaman }}">
                                                     <i class="bi bi-arrow-clockwise"></i> Perpanjang
                                                 </button>
+                                            @elseif($borrowing->extension_status === 'requested')
+                                                <span class="text-warning">
+                                                    <i class="bi bi-clock"></i> Menunggu persetujuan
+                                                </span>
+                                            @elseif($borrowing->extension_status === 'approved')
+                                                <span class="text-success">
+                                                    <i class="bi bi-check-circle"></i> Diperpanjang
+                                                </span>
+                                            @elseif($borrowing->extension_status === 'rejected')
+                                                <span class="text-danger">
+                                                    <i class="bi bi-x-circle"></i> Ditolak
+                                                </span>
+                                                @if($borrowing->rejection_reason)
+                                                    <br><small class="text-muted">{{ $borrowing->rejection_reason }}</small>
+                                                @endif
                                             @else
                                                 <span class="text-muted">Tidak dapat diperpanjang</span>
                                             @endif
@@ -181,46 +202,92 @@
 </div>
 
 @if($activeBorrowings->count() > 0)
+<!-- Extension Request Modal -->
+<div class="modal fade" id="extensionModal" tabindex="-1" aria-labelledby="extensionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="extensionModalLabel">Permintaan Perpanjangan Pinjaman</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="extensionForm">
+                    <div class="mb-3">
+                        <label for="extensionReason" class="form-label">Alasan Perpanjangan (Opsional)</label>
+                        <textarea class="form-control" id="extensionReason" name="reason" rows="3"
+                                  placeholder="Tuliskan alasan Anda ingin memperpanjang pinjaman buku ini..."></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Permintaan perpanjangan akan dikirim ke petugas untuk disetujui. Anda akan mendapat notifikasi setelah permintaan diproses.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="submitExtension">Kirim Permintaan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    let currentLoanId = null;
+    const modal = new bootstrap.Modal(document.getElementById('extensionModal'));
+
     // Handle loan extension
     document.querySelectorAll('.extend-loan').forEach(button => {
         button.addEventListener('click', function() {
-            const loanId = this.dataset.id;
-            const button = this;
-
-            if (confirm('Apakah Anda yakin ingin memperpanjang pinjaman ini selama 7 hari?')) {
-                button.disabled = true;
-                button.innerHTML = '<i class="bi bi-hourglass-split"></i> Memproses...';
-
-                fetch('{{ route("anggota.loans.extend") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        id_peminjaman: loanId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                        button.disabled = false;
-                        button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Perpanjang';
-                    }
-                })
-                .catch(error => {
-                    alert('Terjadi kesalahan saat memproses permintaan');
-                    button.disabled = false;
-                    button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Perpanjang';
-                });
-            }
+            currentLoanId = this.dataset.id;
+            modal.show();
         });
+    });
+
+    // Handle extension form submission
+    document.getElementById('submitExtension').addEventListener('click', function() {
+        if (!currentLoanId) return;
+
+        const reason = document.getElementById('extensionReason').value;
+        const submitButton = this;
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim...';
+
+        fetch('{{ route("anggota.loans.extend") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                id_peminjaman: currentLoanId,
+                reason: reason
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                modal.hide();
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            alert('Terjadi kesalahan saat memproses permintaan');
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Kirim Permintaan';
+        });
+    });
+
+    // Reset form when modal is hidden
+    document.getElementById('extensionModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('extensionForm').reset();
+        currentLoanId = null;
     });
 });
 </script>

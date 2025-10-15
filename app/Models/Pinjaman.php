@@ -25,13 +25,21 @@ class Pinjaman extends Model
         'status',
         'denda',
         'keterangan',
-        'kondisi_buku'
+        'kondisi_buku',
+        'extension_status',
+        'extension_requested_at',
+        'approved_by',
+        'extension_approved_at',
+        'extension_reason',
+        'rejection_reason'
     ];
 
     protected $casts = [
         'tanggal_pinjam' => 'date',
         'batas_kembali' => 'date',
         'tanggal_kembali' => 'date',
+        'extension_requested_at' => 'date',
+        'extension_approved_at' => 'date',
         'denda' => 'decimal:2'
     ];
 
@@ -51,6 +59,14 @@ class Pinjaman extends Model
     public function book()
     {
         return $this->belongsTo(Book::class, 'id_buku', 'id_buku');
+    }
+
+    /**
+     * Relationship with approver (petugas/admin)
+     */
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by', 'id_user');
     }
 
     /**
@@ -250,5 +266,101 @@ class Pinjaman extends Model
                    })
                    ->where('status', '!=', 'dikembalikan')
                    ->first();
+    }
+
+    /**
+     * Request extension for this loan
+     */
+    public function requestExtension($reason = null)
+    {
+        if ($this->status !== 'dipinjam' || $this->extension_status !== 'none') {
+            return false;
+        }
+
+        $this->extension_status = 'requested';
+        $this->extension_requested_at = Carbon::now();
+        $this->extension_reason = $reason;
+
+        return $this->save();
+    }
+
+    /**
+     * Approve extension request
+     */
+    public function approveExtension($approverId, $extendDays = 7)
+    {
+        if ($this->extension_status !== 'requested') {
+            return false;
+        }
+
+        $this->extension_status = 'approved';
+        $this->approved_by = $approverId;
+        $this->extension_approved_at = Carbon::now();
+        $this->batas_kembali = Carbon::parse($this->batas_kembali)->addDays($extendDays);
+
+        return $this->save();
+    }
+
+    /**
+     * Reject extension request
+     */
+    public function rejectExtension($approverId, $reason = null)
+    {
+        if ($this->extension_status !== 'requested') {
+            return false;
+        }
+
+        $this->extension_status = 'rejected';
+        $this->approved_by = $approverId;
+        $this->extension_approved_at = Carbon::now();
+        $this->rejection_reason = $reason;
+
+        return $this->save();
+    }
+
+    /**
+     * Check if can request extension
+     */
+    public function canRequestExtension()
+    {
+        return $this->status === 'dipinjam' &&
+               $this->extension_status === 'none' &&
+               !$this->isOverdue();
+    }
+
+    /**
+     * Get formatted extension status
+     */
+    public function getFormattedExtensionStatusAttribute()
+    {
+        return match($this->extension_status) {
+            'none' => 'Tidak ada permintaan',
+            'requested' => 'Menunggu persetujuan',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+            default => ucfirst($this->extension_status)
+        };
+    }
+
+    /**
+     * Get extension status color for UI
+     */
+    public function getExtensionStatusColorAttribute()
+    {
+        return match($this->extension_status) {
+            'none' => 'secondary',
+            'requested' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            default => 'secondary'
+        };
+    }
+
+    /**
+     * Scope for pending extension requests
+     */
+    public function scopePendingExtensions($query)
+    {
+        return $query->where('extension_status', 'requested');
     }
 }

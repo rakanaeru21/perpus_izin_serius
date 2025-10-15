@@ -56,44 +56,45 @@ class AnggotaController extends Controller
     }
 
     /**
-     * Extend loan period for a book
+     * Request loan extension (requires approval)
      */
     public function extendLoan(Request $request)
     {
         $request->validate([
-            'id_peminjaman' => 'required|exists:peminjaman,id_peminjaman'
+            'id_peminjaman' => 'required|exists:peminjaman,id_peminjaman',
+            'reason' => 'nullable|string|max:500'
         ]);
 
         $userId = Auth::id();
         $pinjaman = Pinjaman::where('id_peminjaman', $request->id_peminjaman)
             ->where('id_user', $userId)
-            ->where('status', 'dipinjam')
             ->first();
 
         if (!$pinjaman) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pinjaman tidak ditemukan atau tidak dapat diperpanjang'
+                'message' => 'Pinjaman tidak ditemukan'
             ]);
         }
 
-        // Check if book can be extended (e.g., not overdue, hasn't been extended multiple times)
-        if ($pinjaman->isOverdue()) {
+        if (!$pinjaman->canRequestExtension()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buku yang sudah terlambat tidak dapat diperpanjang'
+                'message' => 'Pinjaman tidak dapat diperpanjang. Pastikan status buku masih dipinjam, belum terlambat, dan belum ada permintaan perpanjangan sebelumnya.'
             ]);
         }
 
-        // Extend the due date by 7 days
-        $newDueDate = Carbon::parse($pinjaman->batas_kembali)->addDays(7);
-        $pinjaman->batas_kembali = $newDueDate;
-        $pinjaman->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pinjaman berhasil diperpanjang hingga ' . $newDueDate->format('d M Y')
-        ]);
+        if ($pinjaman->requestExtension($request->reason)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Permintaan perpanjangan telah dikirim. Silakan tunggu persetujuan dari petugas.'
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim permintaan perpanjangan'
+            ]);
+        }
     }
 
     /**

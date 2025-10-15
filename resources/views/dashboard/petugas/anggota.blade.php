@@ -7,7 +7,7 @@
 
 @section('sidebar-menu')
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('dashboard.petugas') }}">
+        <a class="nav-link " href="{{ route('dashboard.petugas') }}">
             <i class="bi bi-speedometer2 me-2"></i>
             Dashboard
         </a>
@@ -37,9 +37,9 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            Keterlambatan
+        <a class="nav-link" href="{{ route('petugas.extensions') }}">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Perpanjang
         </a>
     </li>
 @endsection
