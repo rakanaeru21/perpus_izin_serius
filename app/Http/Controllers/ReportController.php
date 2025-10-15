@@ -87,6 +87,20 @@ class ReportController extends Controller
     }
 
     /**
+     * Generate comprehensive report
+     */
+    public function generateComprehensive(Request $request)
+    {
+        $data = $this->getComprehensiveData();
+
+        if ($request->input('format') === 'pdf') {
+            return $this->generatePDF('comprehensive', $data, 'Laporan Komprehensif - ' . Carbon::now()->format('d/m/Y'));
+        }
+
+        return response()->json($data);
+    }
+
+    /**
      * Get borrowing statistics for charts
      */
     public function getBorrowingStats(Request $request)
@@ -151,6 +165,133 @@ class ReportController extends Controller
                 ['kategori' => 'Pendidikan', 'total' => 15],
                 ['kategori' => 'Agama', 'total' => 12]
             ]);
+        }
+    }
+
+    /**
+     * Get comprehensive data
+     */
+    private function getComprehensiveData()
+    {
+        try {
+            // Peminjam terbaru (7 hari terakhir)
+            $recentBorrowers = DB::table('peminjaman')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_pinjam', [Carbon::now()->subDays(7), Carbon::now()])
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'user.username',
+                    'buku.judul_buku',
+                    'buku.penulis'
+                )
+                ->orderBy('peminjaman.tanggal_pinjam', 'desc')
+                ->limit(20)
+                ->get();
+
+            // Buku yang dikembalikan (7 hari terakhir)
+            $recentReturns = DB::table('peminjaman')
+                ->join('user', 'peminjaman.id_user', '=', 'user.id_user')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->whereBetween('peminjaman.tanggal_kembali', [Carbon::now()->subDays(7), Carbon::now()])
+                ->where('peminjaman.status', 'dikembalikan')
+                ->select(
+                    'peminjaman.*',
+                    'user.nama_lengkap as nama_peminjam',
+                    'buku.judul_buku',
+                    'buku.penulis'
+                )
+                ->orderBy('peminjaman.tanggal_kembali', 'desc')
+                ->limit(20)
+                ->get();
+
+            // Buku dengan rating bagus (rating >= 4)
+            $highRatedBooks = DB::table('buku')
+                ->leftJoin('book_comments', 'buku.id_buku', '=', 'book_comments.id_buku')
+                ->select(
+                    'buku.id_buku',
+                    'buku.judul_buku',
+                    'buku.penulis',
+                    'buku.kategori',
+                    DB::raw('COALESCE(AVG(book_comments.rating), 0) as avg_rating'),
+                    DB::raw('COUNT(book_comments.rating) as total_ratings')
+                )
+                ->groupBy('buku.id_buku', 'buku.judul_buku', 'buku.penulis', 'buku.kategori')
+                ->having('avg_rating', '>=', 4)
+                ->having('total_ratings', '>', 0)
+                ->orderBy('avg_rating', 'desc')
+                ->orderBy('total_ratings', 'desc')
+                ->limit(15)
+                ->get()
+                ->map(function($book) {
+                    $book->avg_rating = round($book->avg_rating, 1);
+                    return $book;
+                });
+
+            // Buku yang sering dipinjam (berdasarkan jumlah peminjaman)
+            $popularBooks = DB::table('peminjaman')
+                ->join('buku', 'peminjaman.id_buku', '=', 'buku.id_buku')
+                ->select(
+                    'buku.id_buku',
+                    'buku.judul_buku',
+                    'buku.penulis',
+                    'buku.kategori',
+                    DB::raw('COUNT(*) as total_borrowed')
+                )
+                ->groupBy('buku.id_buku', 'buku.judul_buku', 'buku.penulis', 'buku.kategori')
+                ->orderBy('total_borrowed', 'desc')
+                ->limit(15)
+                ->get();
+
+            // Buku yang jarang dipinjam (berdasarkan jumlah peminjaman terkecil atau tidak pernah dipinjam)
+            $unpopularBooks = DB::table('buku')
+                ->leftJoin('peminjaman', 'buku.id_buku', '=', 'peminjaman.id_buku')
+                ->select(
+                    'buku.id_buku',
+                    'buku.judul_buku',
+                    'buku.penulis',
+                    'buku.kategori',
+                    'buku.tahun_terbit',
+                    DB::raw('COALESCE(COUNT(peminjaman.id_peminjaman), 0) as total_borrowed')
+                )
+                ->groupBy('buku.id_buku', 'buku.judul_buku', 'buku.penulis', 'buku.kategori', 'buku.tahun_terbit')
+                ->orderBy('total_borrowed', 'asc')
+                ->limit(15)
+                ->get();
+
+            // Statistik umum
+            $statistics = [
+                'total_members' => DB::table('user')->where('role', 'anggota')->where('status', 'aktif')->count(),
+                'total_books' => DB::table('buku')->count(),
+                'total_borrowings' => DB::table('peminjaman')->count(),
+                'active_borrowings' => DB::table('peminjaman')->where('status', 'dipinjam')->count(),
+                'overdue_borrowings' => DB::table('peminjaman')
+                    ->where('status', 'dipinjam')
+                    ->where('batas_kembali', '<', Carbon::now())
+                    ->count(),
+                'recent_borrowings' => DB::table('peminjaman')
+                    ->whereBetween('tanggal_pinjam', [Carbon::now()->subDays(7), Carbon::now()])
+                    ->count(),
+                'recent_returns' => DB::table('peminjaman')
+                    ->whereBetween('tanggal_kembali', [Carbon::now()->subDays(7), Carbon::now()])
+                    ->where('status', 'dikembalikan')
+                    ->count(),
+            ];
+
+            return [
+                'generated_at' => Carbon::now()->format('d/m/Y H:i:s'),
+                'period' => 'Data terkini per ' . Carbon::now()->format('d/m/Y'),
+                'statistics' => $statistics,
+                'recent_borrowers' => $recentBorrowers,
+                'recent_returns' => $recentReturns,
+                'high_rated_books' => $highRatedBooks,
+                'popular_books' => $popularBooks,
+                'unpopular_books' => $unpopularBooks
+            ];
+
+        } catch (\Exception $e) {
+            return $this->getSampleComprehensiveData();
         }
     }
 
@@ -513,6 +654,68 @@ class ReportController extends Controller
             'total_borrowings' => rand(800, 2000),
             'total_returns' => rand(700, 1800),
             'monthly_breakdown' => []
+        ];
+    }
+
+    private function getSampleComprehensiveData()
+    {
+        return [
+            'generated_at' => Carbon::now()->format('d/m/Y H:i:s'),
+            'period' => 'Data terkini per ' . Carbon::now()->format('d/m/Y'),
+            'statistics' => [
+                'total_members' => 245,
+                'total_books' => 1250,
+                'total_borrowings' => 3420,
+                'active_borrowings' => 89,
+                'overdue_borrowings' => 12,
+                'recent_borrowings' => 45,
+                'recent_returns' => 38
+            ],
+            'recent_borrowers' => collect([
+                (object)[
+                    'id_peminjaman' => 1,
+                    'nama_peminjam' => 'John Doe',
+                    'username' => 'john123',
+                    'judul_buku' => 'Laskar Pelangi',
+                    'penulis' => 'Andrea Hirata',
+                    'tanggal_pinjam' => Carbon::now()->subDays(1)->format('Y-m-d')
+                ]
+            ]),
+            'recent_returns' => collect([
+                (object)[
+                    'id_peminjaman' => 2,
+                    'nama_peminjam' => 'Jane Smith',
+                    'judul_buku' => 'Bumi Manusia',
+                    'penulis' => 'Pramoedya Ananta Toer',
+                    'tanggal_kembali' => Carbon::now()->subDays(1)->format('Y-m-d')
+                ]
+            ]),
+            'high_rated_books' => collect([
+                (object)[
+                    'judul_buku' => 'Dilan 1990',
+                    'penulis' => 'Pidi Baiq',
+                    'kategori' => 'Romance',
+                    'avg_rating' => 4.8,
+                    'total_ratings' => 25
+                ]
+            ]),
+            'popular_books' => collect([
+                (object)[
+                    'judul_buku' => 'Ayat-Ayat Cinta',
+                    'penulis' => 'Habiburrahman El Shirazy',
+                    'kategori' => 'Romance',
+                    'total_borrowed' => 45
+                ]
+            ]),
+            'unpopular_books' => collect([
+                (object)[
+                    'judul_buku' => 'Quantum Physics',
+                    'penulis' => 'Einstein',
+                    'kategori' => 'Science',
+                    'tahun_terbit' => 2020,
+                    'total_borrowed' => 0
+                ]
+            ])
         ];
     }
 

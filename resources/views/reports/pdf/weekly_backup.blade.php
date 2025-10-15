@@ -38,7 +38,7 @@
             font-size: 10px;
             color: #6c757d;
         }
-
+        
         .stats-overview {
             display: table;
             width: 100%;
@@ -69,7 +69,7 @@
             text-transform: uppercase;
             font-weight: 600;
         }
-
+        
         .section-title {
             background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
             color: white;
@@ -80,7 +80,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(40,167,69,0.2);
         }
-
+        
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -108,7 +108,7 @@
         .table tr:hover {
             background-color: #e3f2fd;
         }
-
+        
         .no-data {
             text-align: center;
             color: #6c757d;
@@ -117,7 +117,7 @@
             background-color: #f8f9fa;
             border-radius: 5px;
         }
-
+        
         .summary-box {
             background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             border: 1px solid #28a745;
@@ -135,7 +135,7 @@
             font-size: 10px;
             color: #424242;
         }
-
+        
         .highlight-box {
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
@@ -143,7 +143,7 @@
             margin: 15px 0;
             border-radius: 0 4px 4px 0;
         }
-
+        
         .analysis-grid {
             display: table;
             width: 100%;
@@ -172,7 +172,7 @@
             font-size: 9px;
             line-height: 1.3;
         }
-
+        
         .footer {
             position: fixed;
             bottom: 15px;
@@ -185,14 +185,14 @@
             padding-top: 8px;
             background-color: white;
         }
-
+        
         .text-center { text-align: center; }
         .text-success { color: #28a745; }
         .text-warning { color: #ffc107; }
         .text-danger { color: #dc3545; }
         .text-primary { color: #007bff; }
         .text-muted { color: #6c757d; }
-
+        
         .badge {
             display: inline-block;
             padding: 2px 6px;
@@ -220,23 +220,16 @@
         <h4>📊 Ringkasan Aktivitas Mingguan</h4>
         <p><strong>Periode Laporan:</strong> {{ $data['period'] }}</p>
         <p><strong>Total Aktivitas:</strong> {{ $data['total_borrowings'] + $data['total_returns'] }} transaksi dalam seminggu</p>
-        <p><strong>Rata-rata Harian:</strong> {{ number_format(($data['total_borrowings'] + $data['total_returns']) / 7, 1) }} transaksi per hari</p>
         @php
             $efficiency = $data['total_borrowings'] > 0 ? round(($data['total_returns'] / $data['total_borrowings']) * 100, 1) : 0;
         @endphp
-        <p><strong>Tingkat Pengembalian:</strong>
-            <span class="
-                @if($efficiency >= 80) text-success
-                @elseif($efficiency >= 60) text-warning
-                @else text-danger
-                @endif
-            ">{{ $efficiency }}%</span>
+        <p><strong>Status:</strong> 
             @if($efficiency >= 80)
-                ✅ Sangat Baik
+                <span class="text-success">✅ Tingkat pengembalian {{ $efficiency }}% - Sangat Baik</span>
             @elseif($efficiency >= 60)
-                ⚠️ Cukup Baik
+                <span class="text-warning">⚠️ Tingkat pengembalian {{ $efficiency }}% - Cukup Baik</span>
             @else
-                ❌ Perlu Perhatian
+                <span class="text-danger">❌ Tingkat pengembalian {{ $efficiency }}% - Perlu Perhatian</span>
             @endif
         </p>
     </div>
@@ -246,31 +239,27 @@
         <div class="stats-row">
             <div class="stats-item">
                 <span class="stats-number">{{ $data['total_borrowings'] }}</span>
-                <div class="stats-label">TOTAL PEMINJAMAN</div>
+                <div class="stats-label">PEMINJAMAN MINGGU INI</div>
             </div>
             <div class="stats-item">
                 <span class="stats-number text-success">{{ $data['total_returns'] }}</span>
-                <div class="stats-label">TOTAL PENGEMBALIAN</div>
+                <div class="stats-label">PENGEMBALIAN MINGGU INI</div>
             </div>
             <div class="stats-item">
-                <span class="stats-number text-primary">{{ number_format($data['total_borrowings'] / 7, 1) }}</span>
-                <div class="stats-label">RATA-RATA HARIAN</div>
-            </div>
-            <div class="stats-item">
-                <span class="stats-number
+                <span class="stats-number 
                     @if($efficiency >= 80) text-success
-                    @elseif($efficiency >= 60) text-warning
+                    @elseif($efficiency >= 60) text-warning  
                     @else text-danger
                     @endif
                 ">{{ $efficiency }}%</span>
-                <div class="stats-label">TINGKAT KEMBALI</div>
+                <div class="stats-label">TINGKAT PENGEMBALIAN</div>
             </div>
         </div>
     </div>
 
-    <!-- Analisis Mingguan -->
-    <div class="section-title">📈 ANALISIS AKTIVITAS MINGGUAN</div>
-
+    <!-- Analisis Aktivitas Mingguan -->
+    <div class="section-title">� ANALISIS AKTIVITAS MINGGUAN</div>
+    
     <div class="analysis-grid">
         <div class="analysis-row">
             <div class="analysis-item">
@@ -294,7 +283,7 @@
                     <p><span class="badge badge-danger">Aktivitas Rendah</span></p>
                 @endif
             </div>
-
+            
             <div class="analysis-item">
                 <h5>� Tingkat Pengembalian</h5>
                 <p><strong>Persentase pengembalian:</strong> {{ $efficiency }}%</p>
@@ -319,7 +308,7 @@
                 @endif
             </div>
         </div>
-
+        
         <div class="analysis-row">
             <div class="analysis-item">
                 <h5>📚 Kategori Populer</h5>
@@ -328,7 +317,7 @@
                 <p><strong>3.</strong> Teknologi - <span class="badge badge-warning">25%</span> peminjaman</p>
                 <p><strong>Insight:</strong> Fiksi tetap menjadi favorit</p>
             </div>
-
+            
             <div class="analysis-item">
                 <h5>⏰ Pola Waktu Peminjaman</h5>
                 <p><strong>Hari tersibuk:</strong> Senin & Selasa</p>
@@ -482,7 +471,7 @@
                 $totalDenda = $data['returns']->sum('denda');
             }
         @endphp
-
+        
         @if($totalDenda > 0)
             <p><strong>💰 Total Denda Minggu Ini:</strong> Rp {{ number_format($totalDenda, 0, ',', '.') }}</p>
         @endif

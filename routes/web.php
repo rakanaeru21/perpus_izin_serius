@@ -43,6 +43,7 @@ Route::prefix('dashboard/admin')->middleware(['auth', 'role:admin'])->group(func
     Route::get('/reports/weekly', [App\Http\Controllers\ReportController::class, 'generateWeekly'])->name('admin.reports.weekly');
     Route::get('/reports/monthly', [App\Http\Controllers\ReportController::class, 'generateMonthly'])->name('admin.reports.monthly');
     Route::get('/reports/yearly', [App\Http\Controllers\ReportController::class, 'generateYearly'])->name('admin.reports.yearly');
+    Route::get('/reports/comprehensive', [App\Http\Controllers\ReportController::class, 'generateComprehensive'])->name('admin.reports.comprehensive');
     Route::get('/reports/stats/borrowing', [App\Http\Controllers\ReportController::class, 'getBorrowingStats'])->name('admin.reports.stats.borrowing');
     Route::get('/reports/stats/category', [App\Http\Controllers\ReportController::class, 'getCategoryStats'])->name('admin.reports.stats.category');
 });
